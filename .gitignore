@@ -12,6 +12,9 @@
 /[Ll]ogs/
 /[Pp]ackages/
 
+#Font that is too large
+Assets/TextMesh Pro/Resources/Fonts & Materials/SIMFANG SDF.asset
+
 # MemoryCaptures can get excessive in size.
 # They also could contain extremely sensitive data
 /[Mm]emoryCaptures/

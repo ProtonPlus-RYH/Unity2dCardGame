@@ -15,13 +15,16 @@ public class Player : MonoBehaviour
     private int MP;
     private List<int> deckList;
     private List<int> handList;
+    private List<int> graveList;
     private bool ifGoingFirst;
 
     public TextMeshProUGUI LifePointTMP;
     public TextMeshProUGUI StaminaPointTMP;
     public TextMeshProUGUI ManaPointTMP;
+    public TextMeshProUGUI DeckCountTMP;
 
     public Transform Hands;
+    public Transform Deck;
     public RectTransform LifeMask;
     public RectTransform StaminaMask;
     public RectTransform ManaMask;
@@ -33,10 +36,12 @@ public class Player : MonoBehaviour
     public void Start()
     {
         library.getAllCards();
+        deckList = new List<int>();
+        handList = new List<int>();
     }
 
     //玩家初始数据加载
-    public void playerStartGame(List<int> decklist, int maxLp, int maxSp, int maxMp, int starterHand)
+    public void playerStartGame(int maxLp, int maxSp, int maxMp, int starterHand)
     {
         maxLP = maxLp;
         maxSP = maxSp;
@@ -47,21 +52,21 @@ public class Player : MonoBehaviour
         LifePointTMP.text = maxLP.ToString();
         StaminaPointTMP.text = maxSP.ToString();
         ManaPointTMP.text = maxMP.ToString();
-        deckList = decklist;
-        handList = new List<int>();
         shuffleDeck();
         drawFromDeck(starterHand);
     }
-
-    public void getLifePointTMP(TextMeshProUGUI target)
+    
+    public List<int> getDeckList()
     {
-        LifePointTMP = target;
+        return deckList;
     }
 
     public void setIfGoingFirst(bool result)
     {
         ifGoingFirst = result;
     }
+
+
 
     public void changeLP(int num)
     {
@@ -114,9 +119,48 @@ public class Player : MonoBehaviour
         newCard.GetComponent<CardDisplay>().card = library.cardPool[id];
     }
 
+    public void deckGet(int id, bool ifBottom)
+    {
+        GameObject newCard = Instantiate(handCardPrefab, Deck);
+        newCard.GetComponent<CardDisplay>().card = library.cardPool[id];
+        newCard.transform.Find("Informations").gameObject.SetActive(false);
+        newCard.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 90f, 0f); //旋转使之面朝下
+
+        if (ifBottom)
+        {
+            deckList.Add(id);
+        }
+        else
+        {
+            List<int> n = deckList;
+            deckList.Clear();
+            deckList.Add(id);
+            deckList.AddRange(n);
+            newCard.transform.SetSiblingIndex(0);
+        }
+        DeckCountTMP.text = deckList.Count.ToString();
+    }
+
+    public void deckRemove(int orderInDeck)
+    {
+        deckList.RemoveAt(orderInDeck);
+        Transform removingCard = Deck.GetChild(orderInDeck).transform;
+        removingCard.SetParent(null);
+        Destroy(removingCard.gameObject);
+        DeckCountTMP.text = deckList.Count.ToString();
+    }
+
     public void getDeck(string deckName)
     {
-        deckList = library.readDeck(deckName);
+        for (int i = 0; i < Deck.childCount; i++)
+        {
+            Destroy(Deck.GetChild(i).gameObject);
+        }
+        List<int> deck = library.readDeck(deckName);
+        for(int i=0; i<deck.Count; i++)
+        {
+            deckGet(deck[i], true);
+        }
     }
 
     public void shuffleDeck()
@@ -127,15 +171,22 @@ public class Player : MonoBehaviour
             int n = deckList[i];
             deckList[i] = deckList[randomCard];
             deckList[randomCard] = n;
+            GameObject randomCardObj = Deck.GetChild(randomCard).gameObject;
+            Deck.GetChild(i).transform.SetSiblingIndex(randomCard);
+            randomCardObj.transform.SetSiblingIndex(i);
         }
     }
 
     public void drawFromDeck(int drawQuantity)
     {
+        if (drawQuantity > deckList.Count)
+        {
+            drawQuantity = deckList.Count;
+        }
         for(int i=0; i<drawQuantity; i++)
         {
             handGet(deckList[0]);
-            deckList.RemoveAt(0);
+            deckRemove(0);
         }
     }
 

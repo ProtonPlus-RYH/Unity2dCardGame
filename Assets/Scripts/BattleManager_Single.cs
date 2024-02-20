@@ -11,8 +11,9 @@ public enum GamePhase
     GameStart, StandbyPhase, MainPhase, EndPhase, OpponentStandbyPhase, OpponentMainPhase, OpponentEndPhase, GameOver
 }
 
-public class BattleManager_Single : MonoBehaviour
+public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 {
+    
     #region varieties
 
     public int maxDistance;
@@ -23,6 +24,7 @@ public class BattleManager_Single : MonoBehaviour
 
     public int firstPlayerStartHand;
     public int secondPlayerStartHand;
+
 
     #endregion
 
@@ -52,26 +54,33 @@ public class BattleManager_Single : MonoBehaviour
     
     public CardPool library;
 
+    private Player self;
+    private Player opponent;
+
     private GamePhase gamePhase = GamePhase.GameStart;
 
     // Start is called before the first frame update
     void Start()
     {
-        
+        self = selfPlayerPrefab.GetComponent<Player>();
+        opponent = opponentPlayerPrefab.GetComponent<Player>();
+        self.getDeck("01");
+        opponent.getDeck("01");
+
         distanceInGame = 0;
         DistanceChange(maxDistance);
         DistanceTMP.text = distanceInGame.ToString();
 
         //投硬币决定先后手
-        selfPlayerPrefab.GetComponent<Player>().setIfGoingFirst(true);
+        self.setIfGoingFirst(true);
         int selfStartHand = firstPlayerStartHand;
-        opponentPlayerPrefab.GetComponent<Player>().setIfGoingFirst(false);
+        opponent.setIfGoingFirst(false);
         int opponentStartHand = secondPlayerStartHand;
         if (!coin())
         {
-            selfPlayerPrefab.GetComponent<Player>().setIfGoingFirst(false);
+            self.setIfGoingFirst(false);
             selfStartHand = secondPlayerStartHand;
-            opponentPlayerPrefab.GetComponent<Player>().setIfGoingFirst(true);
+            opponent.setIfGoingFirst(true);
             opponentStartHand = firstPlayerStartHand;
             PhaseChange(GamePhase.OpponentStandbyPhase);
         }
@@ -80,29 +89,30 @@ public class BattleManager_Single : MonoBehaviour
             PhaseChange(GamePhase.StandbyPhase);
         }
 
-        selfPlayerPrefab.GetComponent<Player>().playerStartGame(library.readDeck("01"), maxLifePoint,maxStaminaPoint,maxManaPoint, selfStartHand);
-        opponentPlayerPrefab.GetComponent<Player>().playerStartGame(library.readDeck("01"), maxLifePoint, maxStaminaPoint, maxManaPoint, opponentStartHand);
+        self.playerStartGame(maxLifePoint, maxStaminaPoint, maxManaPoint, selfStartHand);
+        opponent.playerStartGame(maxLifePoint, maxStaminaPoint, maxManaPoint, opponentStartHand);
 
-
-        
     }
 
     void Update()
     {
-        
+        if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
+        {
+            infoDisplayer.SetActive(false);
+        }
     }
 
 
     public void OnClickMoveForward()
     {
         DistanceChange(-1);
-        selfPlayerPrefab.GetComponent<Player>().changeSP(-1);
+        self.changeSP(-1);
     }
 
     public void OnClickMoveBack()
     {
         DistanceChange(1);
-        selfPlayerPrefab.GetComponent<Player>().changeSP(-1);
+        self.changeSP(-1);
     }
 
     public void OnClickTurnEnd()
@@ -146,13 +156,7 @@ public class BattleManager_Single : MonoBehaviour
         }
     }
 
-    /*public void infoDisappear()
-    {
-        if (!EventSystem.current.IsPointerOverGameObject())
-        {
-            infoDisplayer.SetActive(false);
-        }
-    }*/
+    
 
     public void DistanceChange(int num)
     {
@@ -204,6 +208,11 @@ public class BattleManager_Single : MonoBehaviour
         {
             case GamePhase.StandbyPhase:
                 PhaseTMP.text = "我方准备阶段";
+                if (self.getDeckList().Count == 0)
+                {
+                    //把墓地放回卡组洗牌
+                }
+                PhaseChange(GamePhase.MainPhase);
                 break;
             case GamePhase.MainPhase:
                 PhaseTMP.text = "我方主要阶段";

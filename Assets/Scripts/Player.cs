@@ -38,6 +38,7 @@ public class Player : MonoBehaviour
         library.getAllCards();
         deckList = new List<int>();
         handList = new List<int>();
+        graveList = new List<int>();
     }
 
     //玩家初始数据加载
@@ -119,6 +120,21 @@ public class Player : MonoBehaviour
         newCard.GetComponent<CardDisplay>().card = library.cardPool[id];
     }
 
+    public void handRemove(int orderInHand)
+    {
+        if(orderInHand < handList.Count)
+        {
+            handList.RemoveAt(orderInHand);
+            Transform removingCard = Hands.GetChild(orderInHand).transform;
+            removingCard.SetParent(null);
+            Destroy(removingCard.gameObject);
+        }
+        else
+        {
+            Debug.Log("手牌数量int越界");
+        }
+    }
+
     public void deckGet(int id, bool ifBottom)
     {
         GameObject newCard = Instantiate(handCardPrefab, Deck);
@@ -143,11 +159,35 @@ public class Player : MonoBehaviour
 
     public void deckRemove(int orderInDeck)
     {
-        deckList.RemoveAt(orderInDeck);
-        Transform removingCard = Deck.GetChild(orderInDeck).transform;
-        removingCard.SetParent(null);
-        Destroy(removingCard.gameObject);
-        DeckCountTMP.text = deckList.Count.ToString();
+        if(orderInDeck < deckList.Count)
+        {
+            deckList.RemoveAt(orderInDeck);
+            Transform removingCard = Deck.GetChild(orderInDeck).transform;
+            removingCard.SetParent(null);
+            Destroy(removingCard.gameObject);
+            DeckCountTMP.text = deckList.Count.ToString();
+        }
+        else
+        {
+            Debug.Log("卡组数量int越界");
+        }
+    }
+
+    public void graveGet(int id)
+    {
+        graveList.Add(id);
+    }
+
+    public void graveRemove(int orderInGrave)
+    {
+        if (orderInGrave < graveList.Count)
+        {
+            graveList.RemoveAt(orderInGrave);
+        }
+        else
+        {
+            Debug.Log("墓地数量int越界");
+        }
     }
 
     public void getDeck(string deckName)
@@ -188,6 +228,11 @@ public class Player : MonoBehaviour
             handGet(deckList[0]);
             deckRemove(0);
         }
+    }
+
+    public void useCardFromHand(int orderInHand)
+    {
+
     }
 
 }

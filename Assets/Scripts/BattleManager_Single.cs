@@ -96,6 +96,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     void Update()
     {
+        //卡片信息关闭
         if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
         {
             infoDisplayer.SetActive(false);
@@ -117,7 +118,13 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     public void OnClickTurnEnd()
     {
-        gamePhase = GamePhase.EndPhase;
+        if(gamePhase == GamePhase.MainPhase)
+        {
+            PhaseChange(GamePhase.EndPhase);
+        }else if (gamePhase == GamePhase.OpponentMainPhase)
+        {
+            PhaseChange(GamePhase.OpponentEndPhase);
+        }
     }
 
     public void OnClickSurrender()
@@ -202,8 +209,13 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
     }
 
+
+    #region Processes
+
     public void PhaseChange(GamePhase phase)
     {
+        gamePhase = phase;
+        
         switch (phase)
         {
             case GamePhase.StandbyPhase:
@@ -212,6 +224,8 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
                 {
                     //把墓地放回卡组洗牌
                 }
+                self.drawFromDeck(2);
+                self.changeSP(5);
                 PhaseChange(GamePhase.MainPhase);
                 break;
             case GamePhase.MainPhase:
@@ -219,20 +233,53 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
                 break;
             case GamePhase.EndPhase:
                 PhaseTMP.text = "我方结束阶段";
+
+                PhaseChange(GamePhase.OpponentStandbyPhase);
                 break;
             case GamePhase.OpponentStandbyPhase:
                 PhaseTMP.text = "对方准备阶段";
+                if (opponent.getDeckList().Count == 0)
+                {
+                    //把墓地放回卡组洗牌
+                }
+                opponent.drawFromDeck(2);
+                opponent.changeSP(5);
+                PhaseChange(GamePhase.OpponentMainPhase);
                 break;
             case GamePhase.OpponentMainPhase:
                 PhaseTMP.text = "对方主要阶段";
                 break;
             case GamePhase.OpponentEndPhase:
                 PhaseTMP.text = "对方结束阶段";
+
+                PhaseChange(GamePhase.StandbyPhase);
                 break;
         }
-        gamePhase = phase;
     }
 
+    public void cardPlayPhase()
+    {
+        //发动时
+
+        //询问对应（若为攻击）
+
+        //处理被对应时
+
+        //处理对应（此时支付cost）
+
+        //处理发动卡片（此时支付cost）
+
+    }
+
+    public void attackDeclare()
+    {
+        //距离计算
+
+        //伤害计算
+
+    }
+
+    #endregion
 
     #region supports
 

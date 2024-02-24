@@ -5,13 +5,18 @@ using UnityEngine;
 public class Card 
 {
     public int CardID;
+    public int BelongID;
+    public int WeaponID;
     public string CardName;
-    public bool IfQuick;
     public int StaminaCost;
     public int ManaCost;
     public string Discription;
-    public int BelongID;
-    public int WeaponID;
+    public bool IfQuick;
+    public int UseLimit_turn;
+    public int useCount_turn;
+    public int useLimit_duel;
+    public int useCount_duel;
+    public bool ifActivable;
     
     public Card(int id, string cardName, bool ifQuick, int staminaCost, int manaCost, string discription, int belongID, int weaponID)
     {

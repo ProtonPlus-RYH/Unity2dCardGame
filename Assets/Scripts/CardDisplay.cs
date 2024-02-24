@@ -17,6 +17,7 @@ public class CardDisplay : MonoBehaviour
     public TextMeshProUGUI distanceTitleText;
 
     public Card card;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -43,6 +44,7 @@ public class CardDisplay : MonoBehaviour
         }
         else
         {
+            var actionCard = card as ActionCard;
             attackPowerText.gameObject.SetActive(false);
             attackPowerTitleText.gameObject.SetActive(false);
             distanceText.gameObject.SetActive(false);

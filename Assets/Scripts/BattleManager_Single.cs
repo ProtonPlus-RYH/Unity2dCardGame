@@ -4,6 +4,9 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
+using System;
+using System.IO;
+using XLua;
 
 
 public enum GamePhase
@@ -53,50 +56,61 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     #endregion
     
     public CardPool library;
+    public EffectTransformer effectManager;
+    public bool ifSelfPlayingCard;
 
-    private Player self;
-    private Player opponent;
+    public Player self;
+    public Player opponent;
 
     private GamePhase gamePhase = GamePhase.GameStart;
 
-    // Start is called before the first frame update
     void Start()
     {
+        library.getAllCards();
         self = selfPlayerPrefab.GetComponent<Player>();
         opponent = opponentPlayerPrefab.GetComponent<Player>();
         self.getDeck("01");
         opponent.getDeck("01");
+        self.shuffleDeck();
+        opponent.shuffleDeck();
+
 
         distanceInGame = 0;
-        DistanceChange(maxDistance);
+        changeDistance(maxDistance);
         DistanceTMP.text = distanceInGame.ToString();
 
+        self.initialStatusSet(maxLifePoint, maxStaminaPoint, maxManaPoint);
+        opponent.initialStatusSet(maxLifePoint, maxStaminaPoint, maxManaPoint);
+
         //投硬币决定先后手
-        self.setIfGoingFirst(true);
+        self.ifGoingFirst = true;
         int selfStartHand = firstPlayerStartHand;
-        opponent.setIfGoingFirst(false);
+        opponent.ifGoingFirst = false;
         int opponentStartHand = secondPlayerStartHand;
         if (!coin())
         {
-            self.setIfGoingFirst(false);
+            self.ifGoingFirst = false;
             selfStartHand = secondPlayerStartHand;
-            opponent.setIfGoingFirst(true);
+            opponent.ifGoingFirst = true;
             opponentStartHand = firstPlayerStartHand;
+            drawCard(self, selfStartHand);
+            drawCard(opponent, opponentStartHand);
+            //输硬币
             PhaseChange(GamePhase.OpponentStandbyPhase);
         }
         else
         {
+            //赢硬币
+            drawCard(self, selfStartHand);
+            drawCard(opponent, opponentStartHand);
             PhaseChange(GamePhase.StandbyPhase);
         }
-
-        self.playerStartGame(maxLifePoint, maxStaminaPoint, maxManaPoint, selfStartHand);
-        opponent.playerStartGame(maxLifePoint, maxStaminaPoint, maxManaPoint, opponentStartHand);
-
+        
     }
 
     void Update()
     {
-        //卡片信息关闭
+        //点击信息框外则卡片信息关闭
         if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
         {
             infoDisplayer.SetActive(false);
@@ -106,14 +120,14 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     public void OnClickMoveForward()
     {
-        DistanceChange(-1);
-        self.changeSP(-1);
+        changeDistance(-1);
+        changeSP(self, -1);
     }
 
     public void OnClickMoveBack()
     {
-        DistanceChange(1);
-        self.changeSP(-1);
+        changeDistance(1);
+        changeSP(self, -1);
     }
 
     public void OnClickTurnEnd()
@@ -134,7 +148,6 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         //结束游戏
         PhaseChange(GamePhase.GameOver);
     }
-
 
 
     public void infoDisplay(Card card)
@@ -164,14 +177,199 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     }
 
     
+    
 
-    public void DistanceChange(int num)
+    #region Processes
+
+    public void PhaseChange(GamePhase phase)
+    {
+        gamePhase = phase;
+        
+        switch (phase)
+        {
+            case GamePhase.StandbyPhase:
+                PhaseTMP.text = "我方准备阶段";
+                if (self.deckList.Count == 0)
+                {
+                    //把墓地放回卡组洗牌
+                }
+                drawCard(self, 2);
+                changeSP(self, 5);
+                PhaseChange(GamePhase.MainPhase);
+                break;
+            case GamePhase.MainPhase:
+                PhaseTMP.text = "我方主要阶段";
+                break;
+            case GamePhase.EndPhase:
+                PhaseTMP.text = "我方结束阶段";
+
+                PhaseChange(GamePhase.OpponentStandbyPhase);
+                break;
+            case GamePhase.OpponentStandbyPhase:
+                PhaseTMP.text = "对方准备阶段";
+                if (opponent.deckList.Count == 0)
+                {
+                    //把墓地放回卡组洗牌
+                }
+                drawCard(opponent, 2);
+                changeSP(opponent, 5);
+                PhaseChange(GamePhase.OpponentMainPhase);
+                break;
+            case GamePhase.OpponentMainPhase:
+                PhaseTMP.text = "对方主要阶段";
+                break;
+            case GamePhase.OpponentEndPhase:
+                PhaseTMP.text = "对方结束阶段";
+
+                PhaseChange(GamePhase.StandbyPhase);
+                break;
+        }
+    }
+
+    #endregion
+
+
+    public void useBuff(int turnLast, int actionLast, bool ifOneChain)//持续回合数，打完几张卡后就消失，是否连锁结束后就消失
+    {
+
+    }
+
+
+    #region card treatments
+    //预制件直接跟Player类关联就直接用Player里面的函数了
+
+    public void drawCard(Player player, int num)
+    {
+        if (num > player.deckList.Count)
+        {
+            num = player.deckList.Count;
+        }
+        for (int i = 0; i < num; i++)
+        {
+            GameObject card = player.Deck.GetChild(0).gameObject;
+            player.handGet(card);
+        }
+    }
+
+    public void discardCard(Player player, int orderInHand)
+    {
+        if (orderInHand < player.handList.Count)
+        {
+            GameObject card = player.Hands.GetChild(orderInHand).gameObject;
+            player.graveGet(card);
+        }
+        else
+        {
+            Debug.Log("手牌数量int越界");
+        }
+        
+    }
+
+    public void cardRecycleToDeck(Player player, int orderInGrave, bool ifBottom, bool ifShuffle)
+    {
+        if (orderInGrave < player.graveList.Count)
+        {
+            Transform card = player.Grave.GetChild(orderInGrave);
+            card.SetParent(player.Deck);
+            player.moveToDeckChange(card.gameObject);
+            if (!ifBottom)
+            {
+                card.transform.SetSiblingIndex(0);
+            }
+            if (ifShuffle)
+            {
+                player.shuffleDeck();
+            }
+        }
+        else
+        {
+            Debug.Log("墓地数量int越界");
+        }
+    }
+
+    public void cardReturnToHand(Player player, int orderInGrave)
+    {
+        if (orderInGrave < player.graveList.Count)
+        {
+            GameObject card = player.Grave.GetChild(orderInGrave).gameObject;
+            player.handGet(card);
+        }
+        else
+        {
+            Debug.Log("墓地数量int越界");
+        }
+    }
+
+
+    public void setIfQuick(Card card, bool result)
+    {
+        card.IfQuick = result;
+    }
+
+    #endregion
+
+    #region numerical changes
+
+    public void changeLP(Player player, int num)
+    {
+        int lp = player.LP;
+        if (lp + num > maxLifePoint)
+        {
+            num = maxLifePoint - lp;
+        }
+        float newScale = ((float)lp + (float)num) / (float)maxLifePoint;
+        player.LifeMask.localScale = new Vector3(newScale, 1.0f, 1.0f);
+        player.LP = lp + num;
+        player.LifePointTMP.text = player.LP.ToString();
+        if (player.LP <= 0)
+        {
+            //判定胜负
+        }
+    }
+
+    public void changeSP(Player player, int num)
+    {
+        int sp = player.SP;
+        if(sp + num > maxStaminaPoint)
+        {
+            num = maxStaminaPoint - sp;
+        }
+        if (sp + num <0)
+        {
+            num = sp;
+        }
+        float newScale = ((float)sp + (float)num) / (float)maxStaminaPoint;
+        player.StaminaMask.localScale = new Vector3(newScale, 1.0f, 1.0f);
+        player.SP = sp + num;
+        player.StaminaPointTMP.text = player.SP.ToString();
+
+    }
+
+    public void changeMP(Player player, int num)
+    {
+        int mp = player.MP;
+        if (mp + num > maxManaPoint)
+        {
+            num = maxManaPoint - mp;
+        }
+        if (mp + num < 0)
+        {
+            num = mp;
+        }
+        float newScale = ((float)mp + (float)num) / (float)maxManaPoint;
+        player.ManaMask.localScale = new Vector3(newScale, 1.0f, 1.0f);
+        player.MP = mp + num;
+        player.ManaPointTMP.text = player.MP.ToString();
+    }
+
+    public void changeDistance(int num)
     {
         //若超过距离限制则走到边缘
-        if(distanceInGame + num > maxDistance)
+        if (distanceInGame + num > maxDistance)
         {
             num = maxDistance - distanceInGame;
-        }else if(distanceInGame + num < 0)
+        }
+        else if (distanceInGame + num < 0)
         {
             num = distanceInGame;
         }
@@ -194,13 +392,14 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
             DistanceBar.GetComponent<GridLayoutGroup>().spacing = new Vector2(40, 0);
         }
 
-        if(num > 0)
+        if (num > 0)
         {
-            for(int i = 0; i < num; i++)
+            for (int i = 0; i < num; i++)
             {
                 GameObject newGroundBlock = Instantiate(groundBlock, DistanceBar);
             }
-        }else if(num < 0)
+        }
+        else if (num < 0)
         {
             for (int i = 0; i > num; i--)
             {
@@ -209,84 +408,27 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
     }
 
+    #endregion
 
-    #region Processes
-
-    public void PhaseChange(GamePhase phase)
+    public Player getCardPlayer()
     {
-        gamePhase = phase;
-        
-        switch (phase)
+        if (ifSelfPlayingCard)
         {
-            case GamePhase.StandbyPhase:
-                PhaseTMP.text = "我方准备阶段";
-                if (self.getDeckList().Count == 0)
-                {
-                    //把墓地放回卡组洗牌
-                }
-                self.drawFromDeck(2);
-                self.changeSP(5);
-                PhaseChange(GamePhase.MainPhase);
-                break;
-            case GamePhase.MainPhase:
-                PhaseTMP.text = "我方主要阶段";
-                break;
-            case GamePhase.EndPhase:
-                PhaseTMP.text = "我方结束阶段";
-
-                PhaseChange(GamePhase.OpponentStandbyPhase);
-                break;
-            case GamePhase.OpponentStandbyPhase:
-                PhaseTMP.text = "对方准备阶段";
-                if (opponent.getDeckList().Count == 0)
-                {
-                    //把墓地放回卡组洗牌
-                }
-                opponent.drawFromDeck(2);
-                opponent.changeSP(5);
-                PhaseChange(GamePhase.OpponentMainPhase);
-                break;
-            case GamePhase.OpponentMainPhase:
-                PhaseTMP.text = "对方主要阶段";
-                break;
-            case GamePhase.OpponentEndPhase:
-                PhaseTMP.text = "对方结束阶段";
-
-                PhaseChange(GamePhase.StandbyPhase);
-                break;
+            return self;
+        }
+        else
+        {
+            return opponent;
         }
     }
 
-    public void cardPlayPhase()
-    {
-        //发动时
-
-        //询问对应（若为攻击）
-
-        //处理被对应时
-
-        //处理对应（此时支付cost）
-
-        //处理发动卡片（此时支付cost）
-
-    }
-
-    public void attackDeclare()
-    {
-        //距离计算
-
-        //伤害计算
-
-    }
-
-    #endregion
 
     #region supports
 
     public bool coin()
     {
         bool result = false;
-        int coin = Random.Range(0, 2);
+        int coin = UnityEngine.Random.Range(0, 2);
         if(coin == 1)
         {
             result = true;
@@ -296,7 +438,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     public int dice(int faceCount)
     {
-        int result = Random.Range(1 , faceCount + 1);
+        int result = UnityEngine.Random.Range(1 , faceCount + 1);
         return result;
     }
 

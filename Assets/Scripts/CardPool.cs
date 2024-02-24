@@ -11,6 +11,7 @@ public class CardPool : MonoBehaviour
     private int belongAmount;
     public List<string> weaponList;
     public List<string> belongList;
+
     public void getAllCards()
     {
         string[] cardCSVData = cardCSV.text.Split('\n');
@@ -88,5 +89,25 @@ public class CardPool : MonoBehaviour
             }
         }
         return cardsInDeck;
+    }
+
+    public Card copyCard(Card originalCard)
+    {
+        Card result = null;
+        if (originalCard.GetType() == typeof(AttackCard))
+        {
+            var originalAttackCard = originalCard as AttackCard;
+            AttackCard attackCard = new AttackCard(originalAttackCard.CardID, originalAttackCard.CardName, originalAttackCard.IfQuick, originalAttackCard.StaminaCost, originalAttackCard.ManaCost, originalAttackCard.Discription, originalAttackCard.BelongID, originalAttackCard.WeaponID, originalAttackCard.AttackPower, originalAttackCard.Distance); ;
+            result = attackCard;
+        }
+        else if(originalCard.GetType() == typeof(ActionCard))
+        {
+            ActionCard actionCard = new ActionCard(originalCard.CardID, originalCard.CardName, originalCard.IfQuick, originalCard.StaminaCost, originalCard.ManaCost, originalCard.Discription, originalCard.BelongID, originalCard.WeaponID);
+            result = actionCard;
+        }
+        result.useCount_turn = 0;
+        result.useCount_duel = 0;
+        result.ifActivable = false;
+        return result;
     }
 }

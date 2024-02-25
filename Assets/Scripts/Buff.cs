@@ -14,15 +14,20 @@ public enum BuffAffectTarget
 
 public class Buff
 {
-    public bool ifTurn;
+    public bool ifTurn = false;
     public int turnLast;
-    public bool ifAction;
+    public bool ifAction = false;
     public int actionLast;
-    public bool ifCard;
+    public bool ifCard = false;
     public int cardLast;
-    public bool ifDuringThisAction;
+    public bool ifDuringThisAction = false;
+    public bool ifEternal = false;
 
-    
+    public Buff(List<BuffLastType> typeOfLast, List<BuffAffectTarget> typeOfTarget) 
+    {
+        
+    }
+
 
     public void countDownDecreaseWhen(BuffLastType buffType)
     {

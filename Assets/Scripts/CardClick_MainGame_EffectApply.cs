@@ -25,24 +25,19 @@ public class CardClick_MainGame_EffectApply : MonoBehaviour, IPointerDownHandler
             switch (EffectTransformer.Instance.processPhase)
             {
                 case SolvingProcess.beforeActivation:
-                    if (cardUser == BattleManager_Single.Instance.self)//我方使用
-                    {
-                        BattleManager_Single.Instance.ifSelfPlayingCard = true;
-                        EffectTransformer.Instance.useCard(card.CardID);
-                    }
-                    else if (cardUser == BattleManager_Single.Instance.opponent)//对方使用
-                    { 
-                        BattleManager_Single.Instance.ifSelfPlayingCard = false;
-                        EffectTransformer.Instance.useCard(card.CardID);
-                    }
+                    gameObject.transform.SetParent(cardUser.FieldZone);
+                    EffectTransformer.Instance.useCard(card);
                     break;
                 case SolvingProcess.activationDeclare:
-                    if(cardUser != BattleManager_Single.Instance.getCardPlayer() && card.IfQuick)//非使用者以及quick才能对应
+                    if(cardUser == EffectTransformer.Instance.activingCard.holdingPlayer.opponent && card.ifQuick_current)//非使用者以及quick才能对应
                     {
-                        EffectTransformer.Instance.counter(card.CardID);
+                        gameObject.transform.SetParent(cardUser.FieldZone);
+                        EffectTransformer.Instance.counter(card);
                     }
                     break;
             }
+            card.useCount_turn++;
+            card.useCount_duel++;
         }
         else
         {

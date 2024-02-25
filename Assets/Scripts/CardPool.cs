@@ -31,27 +31,29 @@ public class CardPool : MonoBehaviour
             else
             {
                 int id = int.Parse(cardData[0]);
-                string cardName = cardData[2];
+                string weaponType = cardData[1];
+                int weaponID = int.Parse(cardData[2]);
+                string belongType = cardData[3];
+                int belongID = int.Parse(cardData[4]);
+                string cardName = cardData[6];
+                int staminaCost = int.Parse(cardData[7]);
+                int manaCost = int.Parse(cardData[8]);
+                int atk = int.Parse(cardData[9]);
+                int distance = int.Parse(cardData[10]);
+                string discription = cardData[11];
+                int turnLimit = int.Parse(cardData[13]);
+                int duelLimit = int.Parse(cardData[14]);
                 bool ifquick = false;
-                if (cardData[3] == "是") 
+                if (cardData[12] == "是") 
                 {
                     ifquick = true;
                 }
-                int staminaCost = int.Parse(cardData[4]);
-                int manaCost = int.Parse(cardData[5]);
-                int atk = int.Parse(cardData[6]);
-                int distance = int.Parse(cardData[7]);
-                string discription = cardData[8];
-                string belongType = cardData[9];
-                int belongID = int.Parse(cardData[10]);
-                string weaponType = cardData[11];
-                int weaponID = int.Parse(cardData[12]);
-                if (cardData[1] == "攻击" || cardData[1] == "attack")
+                if (cardData[5] == "攻击" || cardData[5] == "attack")
                 {
-                    cardPool.Add(new AttackCard(id, cardName, ifquick, staminaCost, manaCost, discription, belongID, weaponID, atk, distance));
-                }else if (cardData[1] == "行动" || cardData[1] == "action")
+                    cardPool.Add(new AttackCard(id, belongID, weaponID, cardName, staminaCost, manaCost, discription, ifquick, turnLimit, duelLimit, atk, distance));
+                }else if (cardData[5] == "行动" || cardData[5] == "action")
                 {
-                    cardPool.Add(new ActionCard(id, cardName, ifquick, staminaCost, manaCost, discription, belongID, weaponID));
+                    cardPool.Add(new ActionCard(id, belongID, weaponID, cardName, staminaCost, manaCost, discription, ifquick, turnLimit, duelLimit));
                 }
                 
                 if (weaponAmount < weaponID)
@@ -97,17 +99,14 @@ public class CardPool : MonoBehaviour
         if (originalCard.GetType() == typeof(AttackCard))
         {
             var originalAttackCard = originalCard as AttackCard;
-            AttackCard attackCard = new AttackCard(originalAttackCard.CardID, originalAttackCard.CardName, originalAttackCard.IfQuick, originalAttackCard.StaminaCost, originalAttackCard.ManaCost, originalAttackCard.Discription, originalAttackCard.BelongID, originalAttackCard.WeaponID, originalAttackCard.AttackPower, originalAttackCard.Distance); ;
+            AttackCard attackCard = new AttackCard(originalAttackCard.CardID, originalAttackCard.BelongID, originalAttackCard.WeaponID, originalAttackCard.CardName, originalAttackCard.StaminaCost, originalAttackCard.ManaCost, originalAttackCard.Discription, originalAttackCard.IfQuick, originalAttackCard.UseLimit_turn, originalAttackCard.UseLimit_duel, originalAttackCard.AttackPower, originalAttackCard.Distance); ;
             result = attackCard;
         }
         else if(originalCard.GetType() == typeof(ActionCard))
         {
-            ActionCard actionCard = new ActionCard(originalCard.CardID, originalCard.CardName, originalCard.IfQuick, originalCard.StaminaCost, originalCard.ManaCost, originalCard.Discription, originalCard.BelongID, originalCard.WeaponID);
+            ActionCard actionCard = new ActionCard(originalCard.CardID, originalCard.BelongID, originalCard.WeaponID, originalCard.CardName, originalCard.StaminaCost, originalCard.ManaCost, originalCard.Discription, originalCard.IfQuick, originalCard.UseLimit_turn, originalCard.UseLimit_duel);
             result = actionCard;
         }
-        result.useCount_turn = 0;
-        result.useCount_duel = 0;
-        result.ifActivable = false;
         return result;
     }
 }

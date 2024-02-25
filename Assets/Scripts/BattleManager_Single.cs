@@ -23,11 +23,12 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     public int maxLifePoint;
     public int maxStaminaPoint;
     public int maxManaPoint;
-    private int distanceInGame;
+    public int distanceInGame;
 
     public int firstPlayerStartHand;
     public int secondPlayerStartHand;
 
+    public List<int> phaseChangeCardActivableKey;
 
     #endregion
 
@@ -57,7 +58,6 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     
     public CardPool library;
     public EffectTransformer effectManager;
-    public bool ifSelfPlayingCard;
 
     public Player self;
     public Player opponent;
@@ -73,7 +73,6 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         opponent.getDeck("01");
         self.shuffleDeck();
         opponent.shuffleDeck();
-
 
         distanceInGame = 0;
         changeDistance(maxDistance);
@@ -176,8 +175,6 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
     }
 
-    
-    
 
     #region Processes
 
@@ -189,7 +186,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         {
             case GamePhase.StandbyPhase:
                 PhaseTMP.text = "我方准备阶段";
-                if (self.deckList.Count == 0)
+                if (self.Deck.childCount == 0)
                 {
                     //把墓地放回卡组洗牌
                 }
@@ -199,15 +196,16 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
                 break;
             case GamePhase.MainPhase:
                 PhaseTMP.text = "我方主要阶段";
+                phaseChangeCardActivableKey = setCardUsable(self);//打开卡牌使用可能性
                 break;
             case GamePhase.EndPhase:
                 PhaseTMP.text = "我方结束阶段";
-
+                resetCardUsable(self, phaseChangeCardActivableKey);//关闭卡牌使用可能性
                 PhaseChange(GamePhase.OpponentStandbyPhase);
                 break;
             case GamePhase.OpponentStandbyPhase:
                 PhaseTMP.text = "对方准备阶段";
-                if (opponent.deckList.Count == 0)
+                if (opponent.Deck.childCount == 0)
                 {
                     //把墓地放回卡组洗牌
                 }
@@ -217,10 +215,11 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
                 break;
             case GamePhase.OpponentMainPhase:
                 PhaseTMP.text = "对方主要阶段";
+                phaseChangeCardActivableKey = setCardUsable(opponent);//打开卡牌使用可能性
                 break;
             case GamePhase.OpponentEndPhase:
                 PhaseTMP.text = "对方结束阶段";
-
+                resetCardUsable(opponent, phaseChangeCardActivableKey);//关闭卡牌使用可能性
                 PhaseChange(GamePhase.StandbyPhase);
                 break;
         }
@@ -240,9 +239,9 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     public void drawCard(Player player, int num)
     {
-        if (num > player.deckList.Count)
+        if (num > player.Deck.childCount)
         {
-            num = player.deckList.Count;
+            num = player.Deck.childCount;
         }
         for (int i = 0; i < num; i++)
         {
@@ -253,7 +252,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     public void discardCard(Player player, int orderInHand)
     {
-        if (orderInHand < player.handList.Count)
+        if (orderInHand < player.Hands.childCount)
         {
             GameObject card = player.Hands.GetChild(orderInHand).gameObject;
             player.graveGet(card);
@@ -267,15 +266,10 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     public void cardRecycleToDeck(Player player, int orderInGrave, bool ifBottom, bool ifShuffle)
     {
-        if (orderInGrave < player.graveList.Count)
+        if (orderInGrave < player.Grave.childCount)
         {
-            Transform card = player.Grave.GetChild(orderInGrave);
-            card.SetParent(player.Deck);
-            player.moveToDeckChange(card.gameObject);
-            if (!ifBottom)
-            {
-                card.transform.SetSiblingIndex(0);
-            }
+            GameObject card = player.Grave.GetChild(orderInGrave).gameObject;
+            player.deckGet(card, ifBottom);
             if (ifShuffle)
             {
                 player.shuffleDeck();
@@ -289,7 +283,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     public void cardReturnToHand(Player player, int orderInGrave)
     {
-        if (orderInGrave < player.graveList.Count)
+        if (orderInGrave < player.Grave.childCount)
         {
             GameObject card = player.Grave.GetChild(orderInGrave).gameObject;
             player.handGet(card);
@@ -301,9 +295,22 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     }
 
 
-    public void setIfQuick(Card card, bool result)
+    public List<int> setCardUsable(Player player)
     {
-        card.IfQuick = result;
+        List<int> usableKey = new List<int>();
+        foreach(var card in player.holdingCards)
+        {
+            usableKey.Add(card.setIfActivable(true));
+        }
+        return usableKey;
+    }
+
+    public void resetCardUsable(Player player, List<int> usableKey)
+    {
+        for(int i=0; i<usableKey.Count; i++)
+        {
+            player.holdingCards[i].extractIfActivable(usableKey[i]);
+        }
     }
 
     #endregion
@@ -409,18 +416,6 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     }
 
     #endregion
-
-    public Player getCardPlayer()
-    {
-        if (ifSelfPlayingCard)
-        {
-            return self;
-        }
-        else
-        {
-            return opponent;
-        }
-    }
 
 
     #region supports

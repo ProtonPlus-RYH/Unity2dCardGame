@@ -16,9 +16,7 @@ public class Player : MonoBehaviour
     public int LP;
     public int SP;
     public int MP;
-    public List<int> deckList;
-    public List<int> handList;
-    public List<int> graveList;
+    public List<Card> holdingCards;
     public bool ifGoingFirst;
 
     public TextMeshProUGUI LifePointTMP;
@@ -30,6 +28,7 @@ public class Player : MonoBehaviour
     public Transform Hands;
     public Transform Deck;
     public Transform Grave;
+    public Transform FieldZone;
     public RectTransform LifeMask;
     public RectTransform StaminaMask;
     public RectTransform ManaMask;
@@ -43,13 +42,11 @@ public class Player : MonoBehaviour
     public void Start()
     {
         library.getAllCards();
-        deckList = new List<int>();
-        handList = new List<int>();
-        graveList = new List<int>();
+        holdingCards = new List<Card>();
     }
 
-    //玩家初始数据加载
-    public void initialStatusSet(int maxLp, int maxSp, int maxMp)
+
+    public void initialStatusSet(int maxLp, int maxSp, int maxMp)//玩家初始数据加载
     {
         maxLP = maxLp;
         maxSP = maxSp;
@@ -63,28 +60,30 @@ public class Player : MonoBehaviour
     }
 
 
-    public void moveToDeckChange(GameObject card)
+    public void moveToDeckChange(GameObject card)//卡牌进入卡组时翻面，转向等
     {
         card.transform.Find("Informations").gameObject.SetActive(false);
         card.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 180f, 0f); //旋转使之面朝下
-    }//卡牌进入卡组时翻面，转向等
+    }
 
-    public void moveOutFromDeckChange(GameObject card)
+    public void moveOutFromDeckChange(GameObject card)//卡牌退出卡组时翻面，转向等
     {
         card.transform.Find("Informations").gameObject.SetActive(true);
         card.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 0f, -90f);
-    }//卡牌退出卡组时翻面，转向等
+    }
 
-    public GameObject cardGenerate(int id, Transform parent)
+    public GameObject cardGenerate(int id, Transform parent)//生成单卡
     {
         GameObject newCard = Instantiate(CardPrefab, parent);
         newCard.GetComponent<CardDisplay>().card = library.copyCard(library.cardPool[id]);
+        newCard.GetComponent<CardDisplay>().card.HoldingPlayer = this;
+        newCard.GetComponent<CardDisplay>().card.holdingPlayer = this;
+        holdingCards.Add(newCard.GetComponent<CardDisplay>().card);
         return newCard;
-    }//生成单卡
+    }
 
-    public void handGet(GameObject card)
+    public void handGet(GameObject card)//手牌从单卡原来所在区域获得单卡
     {
-        handList.Add(card.GetComponent<CardDisplay>().card.CardID);
         int handCount = Hands.childCount + 1;
         //间距调整
         float space = 25;
@@ -106,23 +105,20 @@ public class Player : MonoBehaviour
             if(fromWhere == Deck)
             {
                 moveOutFromDeckChange(card);
-                deckList.RemoveAt(card.transform.GetSiblingIndex());
-                DeckCountTMP.text = deckList.Count.ToString();
+                DeckCountTMP.text = Deck.childCount.ToString();
             }
             else if(fromWhere == Grave)
             {
-                graveList.RemoveAt(card.transform.GetSiblingIndex());
-                GraveCountTMP.text = graveList.Count.ToString();
+                GraveCountTMP.text = Grave.childCount.ToString();
             }
         }
         card.transform.SetParent(Hands);
-    }//手牌从单卡原来所在区域获得单卡
+    }
 
-    public void handRemove(int orderInHand)
+    public void handRemove(int orderInHand)//移除手牌单卡
     {
-        if(orderInHand < handList.Count)
+        if(orderInHand < Hands.childCount)
         {
-            handList.RemoveAt(orderInHand);
             Transform removingCard = Hands.GetChild(orderInHand).transform;
             removingCard.SetParent(null);
             Destroy(removingCard.gameObject);
@@ -131,9 +127,9 @@ public class Player : MonoBehaviour
         {
             Debug.Log("手牌数量int越界");
         }
-    }//移除手牌单卡
+    }
 
-    public void deckGet(GameObject card, bool ifBottom)
+    public void deckGet(GameObject card, bool ifBottom)//卡组从单卡原来所在区域获得单卡
     {
         moveToDeckChange(card);
         int id = card.GetComponent<CardDisplay>().card.CardID;
@@ -141,78 +137,58 @@ public class Player : MonoBehaviour
         Transform fromWhere = card.transform.parent;
         if(fromWhere != null)
         {
-            if (fromWhere == Hands)
+            if  (fromWhere == Grave)
             {
-                handList.RemoveAt(card.transform.GetSiblingIndex());
-            }
-            else if (fromWhere == Grave)
-            {
-                graveList.RemoveAt(card.transform.GetSiblingIndex());
-                GraveCountTMP.text = graveList.Count.ToString();
+                GraveCountTMP.text = Grave.childCount.ToString();
             }
         }
         
         card.transform.SetParent(Deck);
-        if (ifBottom)
+        if (!ifBottom)
         {
-            deckList.Add(id);
-        }
-        else
-        {
-            List<int> n = deckList;
-            deckList.Clear();
-            deckList.Add(id);
-            deckList.AddRange(n);
             card.transform.SetSiblingIndex(0);
         }
-        DeckCountTMP.text = deckList.Count.ToString();
-    }//卡组从单卡原来所在区域获得单卡
+        DeckCountTMP.text = Deck.childCount.ToString();
+    }
 
-    public void deckRemove(int orderInDeck)
+    public void deckRemove(int orderInDeck)//移除卡组单卡
     {
-        if(orderInDeck < deckList.Count)
+        if(orderInDeck < Deck.childCount)
         {
-            deckList.RemoveAt(orderInDeck);
             Transform removingCard = Deck.GetChild(orderInDeck).transform;
             removingCard.SetParent(null);
             Destroy(removingCard.gameObject);
-            DeckCountTMP.text = deckList.Count.ToString();
+            DeckCountTMP.text = Deck.childCount.ToString();
         }
         else
         {
             Debug.Log("卡组数量int越界");
         }
-    }//移除卡组单卡
+    }
 
-    public void graveGet(GameObject card)
+    public void graveGet(GameObject card)//墓地从单卡原来所在区域获得单卡
     {
-        graveList.Add(card.GetComponent<CardDisplay>().card.CardID);
         Transform fromWhere = card.transform.parent;
         if(fromWhere != null)
         {
-            if (fromWhere == Hands)
-            {
-                handList.RemoveAt(card.transform.GetSiblingIndex());
-            }
-            else if (fromWhere == Deck)
+            if (fromWhere == Deck)
             {
                 moveOutFromDeckChange(card);
-                deckList.RemoveAt(card.transform.GetSiblingIndex());
-                DeckCountTMP.text = deckList.Count.ToString();
+                DeckCountTMP.text = Deck.childCount.ToString();
             }
         }
         card.transform.SetParent(Grave);
-    }//墓地从单卡原来所在区域获得单卡
+        GraveCountTMP.text = Grave.childCount.ToString();
+    }
 
     public void graveRemove(int orderInGrave)//移除墓地单卡
     {
-        if (orderInGrave < graveList.Count)
+        if (orderInGrave < Grave.childCount)
         {
-            graveList.RemoveAt(orderInGrave);
             Transform removingCard = Deck.GetChild(orderInGrave).transform;
             removingCard.SetParent(null);
             Destroy(removingCard.gameObject);
-            GraveCountTMP.text = deckList.Count.ToString();
+            GraveCountTMP.text = Grave.childCount.ToString();
         }
         else
         {
@@ -220,33 +196,29 @@ public class Player : MonoBehaviour
         }
     }
 
-    public void getDeck(string deckName)
+    public void getDeck(string deckName)//初始化卡组
     {
         for (int i = 0; i < Deck.childCount; i++)
         {
             Destroy(Deck.GetChild(i).gameObject);
         }
-        deckList = new List<int>();
         List<int> deck = library.readDeck(deckName);
         for(int i=0; i<deck.Count; i++)
         {
             GameObject newCard = cardGenerate(deck[i], Deck);
             deckGet(newCard, true);
         }
-    }//初始化卡组
+    }
 
-    public void shuffleDeck()
+    public void shuffleDeck()//洗牌
     {
-        for (int i = 0; i < deckList.Count; i++)
+        for (int i = 0; i < Deck.childCount; i++)
         {
-            int randomCard = UnityEngine.Random.Range(0, deckList.Count);
-            int n = deckList[i];
-            deckList[i] = deckList[randomCard];
-            deckList[randomCard] = n;
+            int randomCard = UnityEngine.Random.Range(0, Deck.childCount);
             GameObject randomCardObj = Deck.GetChild(randomCard).gameObject;
             Deck.GetChild(i).transform.SetSiblingIndex(randomCard);
             randomCardObj.transform.SetSiblingIndex(i);
         }
-    }//洗牌
+    }
 
 }

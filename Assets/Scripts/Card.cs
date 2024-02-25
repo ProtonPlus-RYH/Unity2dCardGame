@@ -93,14 +93,14 @@ public class Card
     {
         ifActivableRecord.Add(boolToNullable(result));
         ifActivable = result;
-        return ifActivableRecord.Count;
+        return ifActivableRecord.Count - 1;
     }
 
     public void extractIfActivable(int queueNum)//先把取号者设空；从最后往前读，遇到空的就跳过
     {
         ifActivableRecord[queueNum] = nullableBool.b_null;
         bool ifGetRecord = false;
-        int recordCount = ifActivableRecord.Count;
+        int recordCount = ifActivableRecord.Count - 1;
         while (!ifGetRecord)
         {
             if (ifActivableRecord[recordCount] != nullableBool.b_null)

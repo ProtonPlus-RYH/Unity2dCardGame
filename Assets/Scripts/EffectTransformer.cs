@@ -69,29 +69,40 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         activationDeclare();
         LuaFunction D_activationDeclare = luaenv_Active.Global.Get<LuaFunction>("ActivationDeclare");
         D_activationDeclare.Call();
-        if (ifCanBeCountered)
+        if (BattleManager_Single.Instance.controller.opponent.FieldZone.childCount == 0)
         {
-            askCounter();
+            if (ifCanBeCountered)
+            {
+                askCounter();
+            }
+            else
+            {
+                activationResolve();
+            }
         }
         else
         {
-            activationResolve();
+            GameObject preSetCard = BattleManager_Single.Instance.controller.opponent.FieldZone.GetChild(0).gameObject;
+            counter(preSetCard.gameObject.GetComponent<CardDisplay>().card);
         }
     }
 
     public void askCounter()//询问对应
     {
         CounterAskDialog.SetActive(true);
+        BattleManager_Single.Instance.changeController();
     }
 
     public void OnButtonClickNoCounter()//按钮：取消对应
     {
         CounterAskDialog.SetActive(false);
+        BattleManager_Single.Instance.changeController();
         ifNoCounter();
     }
 
     public void counter(Card card)//对应发动时
     {
+        BattleManager_Single.Instance.changeController();
         processPhase = SolvingProcess.activationDeclare;
         int id = card.CardID;
         counterCard = card;

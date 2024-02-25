@@ -11,7 +11,7 @@ using XLua;
 
 public enum GamePhase
 {
-    GameStart, StandbyPhase, MainPhase, EndPhase, OpponentStandbyPhase, OpponentMainPhase, OpponentEndPhase, GameOver
+    GameStart, StandbyPhase, MainPhase, EndPhase, selfHandDiscarding, OpponentStandbyPhase, OpponentMainPhase, OpponentEndPhase, opponentHandDiscarding, GameOver
 }
 
 public class BattleManager_Single : MonoSingleton<BattleManager_Single>
@@ -24,6 +24,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     public int maxStaminaPoint;
     public int maxManaPoint;
     public int distanceInGame;
+    public int maxHand;
 
     public int firstPlayerStartHand;
     public int secondPlayerStartHand;
@@ -50,6 +51,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     public Transform DistanceBar;
     public GameObject groundBlock;
     public GameObject infoDisplayer;
+    public GameObject textTMP;
 
     public GameObject selfPlayerPrefab; //存储我方玩家数据
     public GameObject opponentPlayerPrefab;  //存储对手玩家数据
@@ -62,7 +64,9 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     public Player self;
     public Player opponent;
 
-    private GamePhase gamePhase = GamePhase.GameStart;
+    public Player controller;
+
+    public GamePhase gamePhase = GamePhase.GameStart;
 
     void Start()
     {
@@ -92,17 +96,19 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
             selfStartHand = secondPlayerStartHand;
             opponent.ifGoingFirst = true;
             opponentStartHand = firstPlayerStartHand;
+            controller = opponent;
             drawCard(self, selfStartHand);
             drawCard(opponent, opponentStartHand);
             //输硬币
-            PhaseChange(GamePhase.OpponentStandbyPhase);
+            opponentStandbyPhase();
         }
         else
         {
+            controller = self;
             //赢硬币
             drawCard(self, selfStartHand);
             drawCard(opponent, opponentStartHand);
-            PhaseChange(GamePhase.StandbyPhase);
+            standbyPhase();
         }
         
     }
@@ -133,10 +139,10 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     {
         if(gamePhase == GamePhase.MainPhase)
         {
-            PhaseChange(GamePhase.EndPhase);
+            endPhase();
         }else if (gamePhase == GamePhase.OpponentMainPhase)
         {
-            PhaseChange(GamePhase.OpponentEndPhase);
+            opponentEndPhase();
         }
     }
 
@@ -145,7 +151,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         //判定胜负
 
         //结束游戏
-        PhaseChange(GamePhase.GameOver);
+        gameOver();
     }
 
 
@@ -176,54 +182,73 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     }
 
 
-    #region Processes
+    #region Phases in Game
 
-    public void PhaseChange(GamePhase phase)
+    public void standbyPhase()
     {
-        gamePhase = phase;
-        
-        switch (phase)
+        gamePhase = GamePhase.StandbyPhase;
+        PhaseTMP.text = "我方准备阶段";
+        if (self.Deck.childCount == 0)
         {
-            case GamePhase.StandbyPhase:
-                PhaseTMP.text = "我方准备阶段";
-                if (self.Deck.childCount == 0)
-                {
-                    //把墓地放回卡组洗牌
-                }
-                drawCard(self, 2);
-                changeSP(self, 5);
-                PhaseChange(GamePhase.MainPhase);
-                break;
-            case GamePhase.MainPhase:
-                PhaseTMP.text = "我方主要阶段";
-                phaseChangeCardActivableKey = setCardUsable(self);//打开卡牌使用可能性
-                break;
-            case GamePhase.EndPhase:
-                PhaseTMP.text = "我方结束阶段";
-                resetCardUsable(self, phaseChangeCardActivableKey);//关闭卡牌使用可能性
-                PhaseChange(GamePhase.OpponentStandbyPhase);
-                break;
-            case GamePhase.OpponentStandbyPhase:
-                PhaseTMP.text = "对方准备阶段";
-                if (opponent.Deck.childCount == 0)
-                {
-                    //把墓地放回卡组洗牌
-                }
-                drawCard(opponent, 2);
-                changeSP(opponent, 5);
-                PhaseChange(GamePhase.OpponentMainPhase);
-                break;
-            case GamePhase.OpponentMainPhase:
-                PhaseTMP.text = "对方主要阶段";
-                phaseChangeCardActivableKey = setCardUsable(opponent);//打开卡牌使用可能性
-                break;
-            case GamePhase.OpponentEndPhase:
-                PhaseTMP.text = "对方结束阶段";
-                resetCardUsable(opponent, phaseChangeCardActivableKey);//关闭卡牌使用可能性
-                PhaseChange(GamePhase.StandbyPhase);
-                break;
+            //强制卡组再构筑
+            deckRebuild(self);
         }
+        drawCard(self, 2);
+        changeSP(self, 5);
+        mainPhase();
     }
+
+    public void mainPhase()
+    {
+        gamePhase = GamePhase.MainPhase;
+        PhaseTMP.text = "我方主要阶段";
+        phaseChangeCardActivableKey = setAllCardUsable(self);//打开卡牌使用可能性
+    }
+
+    public void endPhase()
+    {
+        gamePhase = GamePhase.EndPhase;
+        PhaseTMP.text = "我方结束阶段";
+
+        resetAllCardUsable(self, phaseChangeCardActivableKey);//关闭卡牌使用可能性
+        handCountCheck();
+    }
+
+    public void opponentStandbyPhase()
+    {
+        gamePhase = GamePhase.OpponentStandbyPhase;
+        PhaseTMP.text = "对方准备阶段";
+        if (opponent.Deck.childCount == 0)
+        {
+            //强制卡组再构筑
+            deckRebuild(opponent);
+        }
+        drawCard(opponent, 2);
+        changeSP(opponent, 5);
+        opponentMainPhase();
+    }
+
+    public void opponentMainPhase()
+    {
+        gamePhase = GamePhase.OpponentMainPhase;
+        PhaseTMP.text = "对方主要阶段";
+        phaseChangeCardActivableKey = setAllCardUsable(opponent);//打开卡牌使用可能性
+    }
+
+    public void opponentEndPhase()
+    {
+        gamePhase = GamePhase.OpponentEndPhase;
+        PhaseTMP.text = "对方结束阶段";
+
+        resetAllCardUsable(opponent, phaseChangeCardActivableKey);//关闭卡牌使用可能性
+        handCountCheck();
+    }
+
+    public void gameOver()
+    {
+        gamePhase = GamePhase.GameOver;
+    }
+
 
     #endregion
 
@@ -294,8 +319,65 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
     }
 
+    public void deckRebuild(Player player)
+    {
+        int graveCount = player.Grave.childCount;
+        for(int i=0; i<graveCount; i++)
+        {
+            cardRecycleToDeck(player, 0, false, true);
+        }
+    }
 
-    public List<int> setCardUsable(Player player)
+    public int buffCardIfQuick(Card card, bool result)
+    {
+        int retInt = card.setIfQuick(result);
+        return retInt;
+    }
+
+    public void handCountCheck()
+    {
+        if(controller.Hands.childCount > maxHand)
+        {
+            discardRequest();
+        }
+        else
+        {
+            if (gamePhase == GamePhase.EndPhase || gamePhase == GamePhase.selfHandDiscarding)
+            {
+                textTMP.SetActive(false);
+                controller = opponent;
+                opponentStandbyPhase();
+            }
+            else if(gamePhase == GamePhase.OpponentEndPhase || gamePhase == GamePhase.opponentHandDiscarding)
+            {
+                textTMP.SetActive(false);
+                controller = self;
+                standbyPhase();
+            }
+        }
+    }
+
+    public void discardRequest()
+    {
+        if(gamePhase == GamePhase.EndPhase)
+        {
+            textTMP.GetComponent<TextMeshProUGUI>().text = "请弃置手牌至" + maxHand.ToString() + "张";
+            gamePhase = GamePhase.selfHandDiscarding;
+        }
+        else if(gamePhase == GamePhase.OpponentEndPhase)
+        {
+            textTMP.GetComponent<TextMeshProUGUI>().text = "对手弃置手牌中";
+            gamePhase = GamePhase.opponentHandDiscarding;
+        }
+        textTMP.SetActive(true);
+    }
+
+    public void returnBuffIfQuick(Card card, int retKey)
+    {
+        card.extractIfQuick(retKey);
+    }
+
+    public List<int> setAllCardUsable(Player player)
     {
         List<int> usableKey = new List<int>();
         foreach(var card in player.holdingCards)
@@ -305,15 +387,32 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         return usableKey;
     }
 
-    public void resetCardUsable(Player player, List<int> usableKey)
+    public void resetAllCardUsable(Player player, List<int> usableKey)
     {
-        for(int i=0; i<usableKey.Count; i++)
+        if (phaseChangeCardActivableKey.Count != 0)
         {
-            player.holdingCards[i].extractIfActivable(usableKey[i]);
+            for (int i = 0; i < usableKey.Count; i++)
+            {
+                player.holdingCards[i].extractIfActivable(usableKey[i]);
+            }
         }
+        phaseChangeCardActivableKey = new List<int>();
     }
 
+    
     #endregion
+
+    
+    public void changeController()
+    {
+        if (phaseChangeCardActivableKey.Count != 0)
+        {
+            Debug.Log("控制权改变");
+            resetAllCardUsable(controller, phaseChangeCardActivableKey);
+            phaseChangeCardActivableKey = setAllCardUsable(controller.opponent);
+            controller = controller.opponent;
+        }
+    }
 
     #region numerical changes
 

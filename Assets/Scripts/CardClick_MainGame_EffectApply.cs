@@ -20,21 +20,21 @@ public class CardClick_MainGame_EffectApply : MonoBehaviour, IPointerDownHandler
     {
         Player cardUser = gameObject.transform.parent.parent.parent.gameObject.GetComponent<Player>();
         Card card = gameObject.GetComponent<CardDisplay>().card;
-        if (card.ifActivable)
+        if (card.getIfActivable())
         {
             switch (EffectTransformer.Instance.processPhase)
             {
                 case SolvingProcess.beforeActivation:
-                    gameObject.transform.SetParent(cardUser.FieldZone);
+                    cardUser.fieldGet(gameObject);
                     gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector3(100f, -150f, 0f);
-                    EffectTransformer.Instance.useCard(card);
+                    EffectTransformer.Instance.useCard(gameObject);
                     break;
                 case SolvingProcess.activationDeclare:
                     if(cardUser == EffectTransformer.Instance.activingCard.holdingPlayer.opponent && card.ifQuick_current)//非使用者以及quick才能对应
                     {
-                        gameObject.transform.SetParent(cardUser.FieldZone);
+                        cardUser.fieldGet(gameObject);
                         gameObject.GetComponent<RectTransform>().anchoredPosition = new Vector3(100f, -150f, 0f);
-                        EffectTransformer.Instance.counter(card);
+                        EffectTransformer.Instance.counter(gameObject);
                     }
                     else if (!card.ifQuick_current)
                     {

@@ -84,6 +84,8 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
         self.initialStatusSet(maxLifePoint, maxStaminaPoint, maxManaPoint);
         opponent.initialStatusSet(maxLifePoint, maxStaminaPoint, maxManaPoint);
+        changeLP(self, -5);
+        changeLP(opponent, -5);
 
         //投硬币决定先后手
         self.ifGoingFirst = true;
@@ -126,23 +128,20 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     public void OnClickMoveForward()
     {
         changeDistance(-1);
-        changeSP(self, -1);
+        changeSP(controller, -1);
     }
 
     public void OnClickMoveBack()
     {
         changeDistance(1);
-        changeSP(self, -1);
+        changeSP(controller, -1);
     }
 
     public void OnClickTurnEnd()
     {
-        if(gamePhase == GamePhase.MainPhase)
+        if(gamePhase == GamePhase.MainPhase || gamePhase == GamePhase.OpponentMainPhase)
         {
-            endPhase();
-        }else if (gamePhase == GamePhase.OpponentMainPhase)
-        {
-            opponentEndPhase();
+            phasePush();
         }
     }
 
@@ -195,7 +194,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
         drawCard(self, 2);
         changeSP(self, 5);
-        mainPhase();
+        phasePush();
     }
 
     public void mainPhase()
@@ -211,6 +210,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         PhaseTMP.text = "我方结束阶段";
 
         resetAllCardUsable(self, phaseChangeCardActivableKey);//关闭卡牌使用可能性
+        resetCardCountInTurn(self);
         handCountCheck();
     }
 
@@ -225,7 +225,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
         drawCard(opponent, 2);
         changeSP(opponent, 5);
-        opponentMainPhase();
+        phasePush();
     }
 
     public void opponentMainPhase()
@@ -241,6 +241,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         PhaseTMP.text = "对方结束阶段";
 
         resetAllCardUsable(opponent, phaseChangeCardActivableKey);//关闭卡牌使用可能性
+        resetCardCountInTurn(opponent);
         handCountCheck();
     }
 
@@ -249,6 +250,36 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         gamePhase = GamePhase.GameOver;
     }
 
+    public void phasePush()
+    {
+        switch (gamePhase)
+        {
+            case GamePhase.StandbyPhase:
+                mainPhase();
+                break;
+            case GamePhase.MainPhase:
+                endPhase();
+                break;
+            case GamePhase.EndPhase:
+                opponentStandbyPhase();
+                break;
+            case GamePhase.selfHandDiscarding:
+                opponentStandbyPhase();
+                break;
+            case GamePhase.OpponentStandbyPhase:
+                opponentMainPhase();
+                break;
+            case GamePhase.OpponentMainPhase:
+                opponentEndPhase();
+                break;
+            case GamePhase.OpponentEndPhase:
+                standbyPhase();
+                break;
+            case GamePhase.opponentHandDiscarding:
+                standbyPhase();
+                break;
+        }
+    }
 
     #endregion
 
@@ -273,6 +304,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
             GameObject card = player.Deck.GetChild(0).gameObject;
             player.handGet(card);
         }
+        //player.drawMultipleCard(num);
     }
 
     public void discardCard(Player player, int orderInHand)
@@ -346,13 +378,13 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
             {
                 textTMP.SetActive(false);
                 controller = opponent;
-                opponentStandbyPhase();
+                phasePush();
             }
             else if(gamePhase == GamePhase.OpponentEndPhase || gamePhase == GamePhase.opponentHandDiscarding)
             {
                 textTMP.SetActive(false);
                 controller = self;
-                standbyPhase();
+                phasePush();
             }
         }
     }
@@ -399,6 +431,13 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         phaseChangeCardActivableKey = new List<int>();
     }
 
+    public void resetCardCountInTurn(Player player)
+    {
+        foreach(var card in player.holdingCards)
+        {
+            card.useCount_turn = 0;
+        }
+    }
     
     #endregion
 
@@ -407,7 +446,6 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     {
         if (phaseChangeCardActivableKey.Count != 0)
         {
-            Debug.Log("控制权改变");
             resetAllCardUsable(controller, phaseChangeCardActivableKey);
             phaseChangeCardActivableKey = setAllCardUsable(controller.opponent);
             controller = controller.opponent;

@@ -30,7 +30,7 @@ public class Card
     public List<nullableBool> ifQuickRecord;//用于叠加bool类型的修改
     public int useCount_turn;
     public int useCount_duel;
-    public bool ifActivable;
+    private bool ifActivable;
     public List<nullableBool> ifActivableRecord;//用于叠加bool类型的修改
     public bool ifNegated;
     public List<nullableBool> ifNegatedRecord;//用于叠加bool类型的修改
@@ -116,6 +116,16 @@ public class Card
         }
     }
 
+    public bool getIfActivable()
+    {
+        bool result = ifActivable;
+        if (useCount_turn>UseLimit_turn || useCount_duel>UseLimit_duel)
+        {
+            result = false;
+        }
+        return result;
+    }
+
     public int setIfNegated(bool result)//返回覆盖队列序号
     {
         ifNegatedRecord.Add(boolToNullable(result));
@@ -176,10 +186,14 @@ public class AttackCard : Card
 {
     public int AttackPower;
     public int Distance;
+    public int attackPower_current;
+    public int distance_current;
     public AttackCard(int idGet, int belongIDGet, int weaponIDGet, string cardNameGet, int staminaCostGet, int manaCostGet, string discriptionGet, bool ifQuickGet, int turnLimitGet, int duelLimitGet, int atkGet, int distanceGet) : base(idGet, belongIDGet, weaponIDGet, cardNameGet, staminaCostGet, manaCostGet, discriptionGet, ifQuickGet, turnLimitGet, duelLimitGet)
     {
         AttackPower = atkGet;
         Distance = distanceGet;
+        attackPower_current = AttackPower;
+        distance_current = Distance;
     }
 }
 

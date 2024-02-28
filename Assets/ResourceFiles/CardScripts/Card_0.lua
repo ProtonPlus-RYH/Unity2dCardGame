@@ -1,5 +1,4 @@
 local effectList = CS.EffectList()
-local 
 
 function ActivationDeclare()
 --把对方的卡都设置成ifQuick = true

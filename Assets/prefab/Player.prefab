@@ -49,6 +49,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7351650240750046626}
   - component: {fileID: 5297452904891029320}
+  - component: {fileID: 5867285404670097531}
   m_Layer: 5
   m_Name: HandGrid
   m_TagString: Untagged
@@ -99,6 +100,18 @@ MonoBehaviour:
   m_Spacing: {x: 25, y: 0}
   m_Constraint: 2
   m_ConstraintCount: 1
+--- !u!114 &5867285404670097531
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 731685481917311169}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b253510fa019aa46818b31a7dbcb2e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1076742625586849948
 GameObject:
   m_ObjectHideFlags: 0
@@ -148,6 +161,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1425578416593905512}
   - component: {fileID: 4157485092072230465}
+  - component: {fileID: 8961111727836773090}
   m_Layer: 5
   m_Name: GraveGrid
   m_TagString: Untagged
@@ -198,6 +212,18 @@ MonoBehaviour:
   m_Spacing: {x: -195, y: 0}
   m_Constraint: 2
   m_ConstraintCount: 1
+--- !u!114 &8961111727836773090
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1562643482628212099}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b253510fa019aa46818b31a7dbcb2e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &1568473151343160817
 GameObject:
   m_ObjectHideFlags: 0
@@ -906,6 +932,7 @@ GameObject:
   m_Component:
   - component: {fileID: 7021781920757534378}
   - component: {fileID: 2585944910883041977}
+  - component: {fileID: 936310319339063285}
   m_Layer: 5
   m_Name: DeckGrid
   m_TagString: Untagged
@@ -956,6 +983,18 @@ MonoBehaviour:
   m_Spacing: {x: -195, y: 0}
   m_Constraint: 2
   m_ConstraintCount: 1
+--- !u!114 &936310319339063285
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5024444441558998394}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b253510fa019aa46818b31a7dbcb2e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5078736018421280425
 GameObject:
   m_ObjectHideFlags: 0
@@ -1042,6 +1081,7 @@ GameObject:
   - component: {fileID: 5125324579314844460}
   - component: {fileID: 1906859130251391030}
   - component: {fileID: 7405562651505181353}
+  - component: {fileID: 8619563187493051491}
   m_Layer: 5
   m_Name: Field
   m_TagString: Untagged
@@ -1106,6 +1146,18 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &8619563187493051491
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5241585095858710040}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7b253510fa019aa46818b31a7dbcb2e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5469516035128666755
 GameObject:
   m_ObjectHideFlags: 0
@@ -1829,15 +1881,19 @@ MonoBehaviour:
   LifePointTMP: {fileID: 2202586659157833755}
   StaminaPointTMP: {fileID: 5156903747149561856}
   ManaPointTMP: {fileID: 1196416605970861613}
-  DeckCountTMP: {fileID: 2846104169558323510}
-  GraveCountTMP: {fileID: 7850615690776052627}
-  Hands: {fileID: 7351650240750046626}
-  Deck: {fileID: 7021781920757534378}
-  Grave: {fileID: 1425578416593905512}
-  FieldZone: {fileID: 5125324579314844460}
   LifeMask: {fileID: 7189657706674378904}
   StaminaMask: {fileID: 7068043475106970524}
   ManaMask: {fileID: 8018448465289048044}
+  DeckCountTMP: {fileID: 2846104169558323510}
+  GraveCountTMP: {fileID: 7850615690776052627}
+  handZoneTransform: {fileID: 7351650240750046626}
+  deckZoneTransform: {fileID: 7021781920757534378}
+  graveZoneTransform: {fileID: 1425578416593905512}
+  FieldZoneTransform: {fileID: 5125324579314844460}
+  handZone: {fileID: 5867285404670097531}
+  deckZone: {fileID: 936310319339063285}
+  graveZone: {fileID: 8961111727836773090}
+  fieldZone: {fileID: 8619563187493051491}
   CardPrefab: {fileID: 0}
   library: {fileID: 394008339195043625, guid: b83266d92775b4e45993e6203f31ad04, type: 3}
   opponent: {fileID: 0}

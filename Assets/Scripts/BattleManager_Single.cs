@@ -29,7 +29,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     public int firstPlayerStartHand;
     public int secondPlayerStartHand;
 
-    public List<int> phaseChangeCardActivableKey;
+    //public List<int> phaseChangeCardActivableKey;
 
     #endregion
 
@@ -79,13 +79,11 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         opponent.shuffleDeck();
 
         distanceInGame = 0;
-        changeDistance(maxDistance);
+        ChangeDistance(maxDistance);
         DistanceTMP.text = distanceInGame.ToString();
 
         self.initialStatusSet(maxLifePoint, maxStaminaPoint, maxManaPoint);
         opponent.initialStatusSet(maxLifePoint, maxStaminaPoint, maxManaPoint);
-        changeLP(self, -5);
-        changeLP(opponent, -5);
 
         //投硬币决定先后手
         self.ifGoingFirst = true;
@@ -99,8 +97,8 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
             opponent.ifGoingFirst = true;
             opponentStartHand = firstPlayerStartHand;
             controller = opponent;
-            drawCard(self, selfStartHand);
-            drawCard(opponent, opponentStartHand);
+            DrawCard(self, selfStartHand);
+            DrawCard(opponent, opponentStartHand);
             //输硬币
             opponentStandbyPhase();
         }
@@ -108,8 +106,8 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         {
             controller = self;
             //赢硬币
-            drawCard(self, selfStartHand);
-            drawCard(opponent, opponentStartHand);
+            DrawCard(self, selfStartHand);
+            DrawCard(opponent, opponentStartHand);
             standbyPhase();
         }
         
@@ -127,14 +125,14 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     public void OnClickMoveForward()
     {
-        changeDistance(-1);
-        changeSP(controller, -1);
+        ChangeDistance(-1);
+        ChangeSP(controller, -1);
     }
 
     public void OnClickMoveBack()
     {
-        changeDistance(1);
-        changeSP(controller, -1);
+        ChangeDistance(1);
+        ChangeSP(controller, -1);
     }
 
     public void OnClickTurnEnd()
@@ -187,13 +185,13 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     {
         gamePhase = GamePhase.StandbyPhase;
         PhaseTMP.text = "我方准备阶段";
-        if (self.Deck.childCount == 0)
+        if (self.deckZone.cardCount() == 0)
         {
             //强制卡组再构筑
-            deckRebuild(self);
+            DeckRebuild(self);
         }
-        drawCard(self, 2);
-        changeSP(self, 5);
+        DrawCard(self, 2);
+        ChangeSP(self, 5);
         phasePush();
     }
 
@@ -201,7 +199,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     {
         gamePhase = GamePhase.MainPhase;
         PhaseTMP.text = "我方主要阶段";
-        phaseChangeCardActivableKey = setAllCardUsable(self);//打开卡牌使用可能性
+        OpenControlling();//打开卡牌使用可能性
     }
 
     public void endPhase()
@@ -209,22 +207,22 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         gamePhase = GamePhase.EndPhase;
         PhaseTMP.text = "我方结束阶段";
 
-        resetAllCardUsable(self, phaseChangeCardActivableKey);//关闭卡牌使用可能性
+        CloseControlling();//关闭卡牌使用可能性
         resetCardCountInTurn(self);
-        handCountCheck();
+        HandCountCheck();
     }
 
     public void opponentStandbyPhase()
     {
         gamePhase = GamePhase.OpponentStandbyPhase;
         PhaseTMP.text = "对方准备阶段";
-        if (opponent.Deck.childCount == 0)
+        if (opponent.deckZone.cardCount() == 0)
         {
             //强制卡组再构筑
-            deckRebuild(opponent);
+            DeckRebuild(opponent);
         }
-        drawCard(opponent, 2);
-        changeSP(opponent, 5);
+        DrawCard(opponent, 2);
+        ChangeSP(opponent, 5);
         phasePush();
     }
 
@@ -232,7 +230,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     {
         gamePhase = GamePhase.OpponentMainPhase;
         PhaseTMP.text = "对方主要阶段";
-        phaseChangeCardActivableKey = setAllCardUsable(opponent);//打开卡牌使用可能性
+        OpenControlling();//打开卡牌使用可能性
     }
 
     public void opponentEndPhase()
@@ -240,9 +238,9 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         gamePhase = GamePhase.OpponentEndPhase;
         PhaseTMP.text = "对方结束阶段";
 
-        resetAllCardUsable(opponent, phaseChangeCardActivableKey);//关闭卡牌使用可能性
+        CloseControlling();//关闭卡牌使用可能性
         resetCardCountInTurn(opponent);
-        handCountCheck();
+        HandCountCheck();
     }
 
     public void gameOver()
@@ -293,25 +291,25 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     #region card treatments
     //预制件直接跟Player类关联就直接用Player里面的函数了
 
-    public void drawCard(Player player, int num)
+    public void DrawCard(Player player, int num)
     {
-        if (num > player.Deck.childCount)
+        if (num > player.deckZone.cardCount())
         {
-            num = player.Deck.childCount;
+            num = player.deckZone.cardCount();
         }
         for (int i = 0; i < num; i++)
         {
-            GameObject card = player.Deck.GetChild(0).gameObject;
+            GameObject card = player.deckZoneTransform.GetChild(0).gameObject;
             player.handGet(card);
         }
         //player.drawMultipleCard(num);
     }
 
-    public void discardCard(Player player, int orderInHand)
+    public void DiscardCard(Player player, int orderInHand)
     {
-        if (orderInHand < player.Hands.childCount)
+        if (orderInHand < player.handZone.cardCount())
         {
-            GameObject card = player.Hands.GetChild(orderInHand).gameObject;
+            GameObject card = player.handZoneTransform.GetChild(orderInHand).gameObject;
             player.graveGet(card);
         }
         else
@@ -321,11 +319,11 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         
     }
 
-    public void cardRecycleToDeck(Player player, int orderInGrave, bool ifBottom, bool ifShuffle)
+    public void CardRecycleToDeck(Player player, int orderInGrave, bool ifBottom, bool ifShuffle)
     {
-        if (orderInGrave < player.Grave.childCount)
+        if (orderInGrave < player.graveZone.cardCount())
         {
-            GameObject card = player.Grave.GetChild(orderInGrave).gameObject;
+            GameObject card = player.graveZoneTransform.GetChild(orderInGrave).gameObject;
             player.deckGet(card, ifBottom);
             if (ifShuffle)
             {
@@ -338,11 +336,11 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
     }
 
-    public void cardReturnToHand(Player player, int orderInGrave)
+    public void CardReturnToHand(Player player, int orderInGrave)
     {
-        if (orderInGrave < player.Grave.childCount)
+        if (orderInGrave < player.graveZone.cardCount())
         {
-            GameObject card = player.Grave.GetChild(orderInGrave).gameObject;
+            GameObject card = player.graveZoneTransform.GetChild(orderInGrave).gameObject;
             player.handGet(card);
         }
         else
@@ -351,26 +349,26 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
     }
 
-    public void deckRebuild(Player player)
+    public void DeckRebuild(Player player)
     {
-        int graveCount = player.Grave.childCount;
+        int graveCount = player.graveZone.cardCount();
         for(int i=0; i<graveCount; i++)
         {
-            cardRecycleToDeck(player, 0, false, true);
+            CardRecycleToDeck(player, 0, false, true);
         }
     }
 
-    public int buffCardIfQuick(Card card, bool result)
+    /*public int BuffCardIfQuick(Card card, bool result)
     {
-        int retInt = card.setIfQuick(result);
+        int retInt = card.SetIfQuickWithReturn(result);
         return retInt;
-    }
+    }*/
 
-    public void handCountCheck()
+    public void HandCountCheck()
     {
-        if(controller.Hands.childCount > maxHand)
+        if(controller.handZone.cardCount() > maxHand)
         {
-            discardRequest();
+            DiscardRequest();
         }
         else
         {
@@ -389,7 +387,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
     }
 
-    public void discardRequest()
+    public void DiscardRequest()
     {
         if(gamePhase == GamePhase.EndPhase)
         {
@@ -403,33 +401,33 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
         textTMP.SetActive(true);
     }
-
-    public void returnBuffIfQuick(Card card, int retKey)
+/*
+    public void ReturnBuffIfQuick(Card card, int retKey)
     {
-        card.extractIfQuick(retKey);
+        card.ExtractIfQuick(retKey);
     }
 
-    public List<int> setAllCardUsable(Player player)
+    public List<int> SetAllCardUsable(Player player)
     {
         List<int> usableKey = new List<int>();
         foreach(var card in player.holdingCards)
         {
-            usableKey.Add(card.setIfActivable(true));
+            usableKey.Add(card.SetIfActivable(true));
         }
         return usableKey;
     }
 
-    public void resetAllCardUsable(Player player, List<int> usableKey)
+    public void ResetAllCardUsable(Player player, List<int> usableKey)
     {
         if (phaseChangeCardActivableKey.Count != 0)
         {
             for (int i = 0; i < usableKey.Count; i++)
             {
-                player.holdingCards[i].extractIfActivable(usableKey[i]);
+                player.holdingCards[i].ExtractIfActivable(usableKey[i]);
             }
         }
         phaseChangeCardActivableKey = new List<int>();
-    }
+    }*/
 
     public void resetCardCountInTurn(Player player)
     {
@@ -441,20 +439,43 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     
     #endregion
 
-    
-    public void changeController()
+    public void OpenControlling()
     {
-        if (phaseChangeCardActivableKey.Count != 0)
+        foreach (var card in controller.holdingCards)
         {
-            resetAllCardUsable(controller, phaseChangeCardActivableKey);
-            phaseChangeCardActivableKey = setAllCardUsable(controller.opponent);
+            card.ifControlling = true;
+        }
+    }
+
+    public void CloseControlling()
+    {
+        foreach (var card in controller.holdingCards)
+        {
+            card.ifControlling = false;
+        }
+    }
+    
+    public void ChangeController()
+    {
+        CloseControlling();
+        controller = controller.opponent;
+        OpenControlling();
+        /*if (phaseChangeCardActivableKey.Count != 0)
+        {
+            ResetAllCardUsable(controller, phaseChangeCardActivableKey);
+            phaseChangeCardActivableKey = SetAllCardUsable(controller.opponent);
             controller = controller.opponent;
         }
+        else
+        {
+            phaseChangeCardActivableKey = SetAllCardUsable(controller.opponent);
+            controller = controller.opponent;
+        }*/
     }
 
     #region numerical changes
 
-    public void changeLP(Player player, int num)
+    public void ChangeLP(Player player, int num)
     {
         int lp = player.LP;
         if (lp + num > maxLifePoint)
@@ -471,7 +492,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
     }
 
-    public void changeSP(Player player, int num)
+    public void ChangeSP(Player player, int num)
     {
         int sp = player.SP;
         if(sp + num > maxStaminaPoint)
@@ -489,7 +510,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     }
 
-    public void changeMP(Player player, int num)
+    public void ChangeMP(Player player, int num)
     {
         int mp = player.MP;
         if (mp + num > maxManaPoint)
@@ -506,7 +527,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         player.ManaPointTMP.text = player.MP.ToString();
     }
 
-    public void changeDistance(int num)
+    public void ChangeDistance(int num)
     {
         //若超过距离限制则走到边缘
         if (distanceInGame + num > maxDistance)

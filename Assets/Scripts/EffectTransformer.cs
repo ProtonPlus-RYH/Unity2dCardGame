@@ -34,7 +34,6 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
 
     public bool ifPaused;
     public bool ifDoingSelection;
-    //public bool ifDoingJudgement;
     public bool judgeResult;
 
     void Start()
@@ -45,7 +44,6 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         ifCanBeCountered = true;
         ifPaused = false;
         ifDoingSelection = false;
-        //ifDoingJudgement = false;
         judgeResult = false;
     }
 
@@ -99,7 +97,7 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         LuaFunction D_activationDeclare = luaenv_Active.Global.Get<LuaFunction>("ActivationDeclare");
         D_activationDeclare.Call();
         //阶段推进
-        if (BattleManager_Single.Instance.controller.opponent.FieldZone.childCount == 0)//判断有无预埋
+        if (BattleManager_Single.Instance.controller.opponent.fieldZone.cardCount() == 0)//判断有无预埋
         {
             if (!ifPaused)
             {
@@ -112,16 +110,11 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
                     ifPaused = false;
                     ifDoingSelection = false;
                 }
-                /*if (ifDoingJudgement)
-                {
-                    ifPaused = false;
-                    ifDoingJudgement = false;
-                }*/
             }
         }
         else
         {
-            GameObject preSetCard = BattleManager_Single.Instance.controller.opponent.FieldZone.GetChild(0).gameObject;
+            GameObject preSetCard = BattleManager_Single.Instance.controller.opponent.fieldZoneTransform.GetChild(0).gameObject;
             counter(preSetCard);
         }
     }
@@ -129,20 +122,20 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
     public void askCounter()//询问对应
     {
         CounterAskDialog.SetActive(true);
-        BattleManager_Single.Instance.changeController();
+        BattleManager_Single.Instance.ChangeController();
     }
 
     public void OnButtonClickNoCounter()//按钮：取消对应
     {
         CounterAskDialog.SetActive(false);
-        BattleManager_Single.Instance.changeController();
+        BattleManager_Single.Instance.ChangeController();
         ifNoCounter();
     }
 
     public void counter(GameObject cardPrefab)//对应发动时
     {
         CounterAskDialog.SetActive(false);
-        BattleManager_Single.Instance.changeController();
+        BattleManager_Single.Instance.ChangeController();
         processPhase = SolvingProcess.counterDeclare;
         //储存对应卡牌
         Card card = cardPrefab.GetComponent<CardDisplay>().card;
@@ -171,11 +164,6 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
                 ifPaused = false;
                 ifDoingSelection = false;
             }
-            /*if (ifDoingJudgement)
-            {
-                ifPaused = false;
-                ifDoingJudgement = false;
-            }*/
         }
     }
 
@@ -197,11 +185,6 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
                 ifPaused = false;
                 ifDoingSelection = false;
             }
-            /*if (ifDoingJudgement)
-            {
-                ifPaused = false;
-                ifDoingJudgement = false;
-            }*/
         }
     }
 
@@ -223,11 +206,6 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
                 ifPaused = false;
                 ifDoingSelection = false;
             }
-            /*if (ifDoingJudgement)
-            {
-                ifPaused = false;
-                ifDoingJudgement = false;
-            }*/
         }
     }
 
@@ -253,11 +231,6 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
                 ifPaused = false;
                 ifDoingSelection = false;
             }
-            /*if (ifDoingJudgement)
-            {
-                ifPaused = false;
-                ifDoingJudgement = false;
-            }*/
         }
     }
 
@@ -280,11 +253,6 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
                 ifPaused = false;
                 ifDoingSelection = false;
             }
-            /*if (ifDoingJudgement)
-            {
-                ifPaused = false;
-                ifDoingJudgement = false;
-            }*/
         }
     }
 
@@ -306,31 +274,25 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
                 ifPaused = false;
                 ifDoingSelection = false;
             }
-            /*if (ifDoingJudgement)
-            {
-                ifPaused = false;
-                ifDoingJudgement = false;
-            }*/
         }
     }
 
     public void processEnd()
     {
         processPhase = SolvingProcess.endProcess;
-        if (BattleManager_Single.Instance.controller.FieldZone.childCount != 0)
+        if (BattleManager_Single.Instance.controller.fieldZone.cardCount() != 0)
         {
-            BattleManager_Single.Instance.controller.graveGet(BattleManager_Single.Instance.controller.FieldZone.transform.GetChild(0).gameObject);//发动者卡牌进墓
+            BattleManager_Single.Instance.controller.graveGet(BattleManager_Single.Instance.controller.fieldZoneTransform.transform.GetChild(0).gameObject);//发动者卡牌进墓
         }
-        if (BattleManager_Single.Instance.controller.opponent.FieldZone.childCount != 0)
+        if (BattleManager_Single.Instance.controller.opponent.fieldZone.cardCount() != 0)
         {
-            BattleManager_Single.Instance.controller.opponent.graveGet(BattleManager_Single.Instance.controller.opponent.FieldZone.transform.GetChild(0).gameObject);//对应者卡牌进墓
+            BattleManager_Single.Instance.controller.opponent.graveGet(BattleManager_Single.Instance.controller.opponent.fieldZoneTransform.transform.GetChild(0).gameObject);//对应者卡牌进墓
         }
         ifNegated_Activer = false;
         ifNegated_Counter = false;
         ifCounterDelayed = false;
         ifCanBeCountered = true;
         ifPaused = false;
-        //ifDoingJudgement = false;
         ifDoingSelection = false;
         activingCard = null;
         counterCard = null;
@@ -353,37 +315,9 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
                 ifPaused = false;
                 ifDoingSelection = false;
             }
-            /*if (ifDoingJudgement)
-            {
-                ifPaused = false;
-                ifDoingJudgement = false;
-            }*/
         }
     }
 
-    /*public void judgeSolve()
-    {
-        Action afterJudge = luaenv_Active.Global.Get<Action>("AfterJudging");
-        LuaFunction D_afterJudge = luaenv_Active.Global.Get<LuaFunction>("AfterJudging(" + processPhase + ")");
-        D_afterJudge.Call();
-        if (!ifPaused)
-        {
-            phasePush();
-        }
-        else
-        {
-            if (ifDoingSelection)
-            {
-                ifPaused = false;
-                ifDoingSelection = false;
-            }
-            if (ifDoingJudgement)
-            {
-                ifPaused = false;
-                ifDoingJudgement = false;
-            }
-        }
-    }*/
 
     public void phasePush()
     {

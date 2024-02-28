@@ -3779,11 +3779,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   CounterAskDialog: {fileID: 1127630067}
+  activingCardPrefab: {fileID: 0}
+  counterCardPrefab: {fileID: 0}
   processPhase: 0
   ifNegated_Activer: 0
   ifNegated_Counter: 0
   ifCounterDelayed: 0
   ifCanBeCountered: 0
+  ifPaused: 0
+  ifDoingSelection: 0
+  judgeResult: 0
 --- !u!4 &2000833852
 Transform:
   m_ObjectHideFlags: 0

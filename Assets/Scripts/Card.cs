@@ -7,6 +7,8 @@ public enum nullableBool
     b_true, b_false, b_null
 }
 
+
+
 public class Card 
 {
     //首字母大写为原始属性，小写为局内属性
@@ -24,6 +26,8 @@ public class Card
     public Player HoldingPlayer;
     public Player holdingPlayer;//登记持有者
 
+    public bool ifControlling;
+
     public int staminaCost_current;
     public int manaCost_current;
     public bool ifQuick_current;
@@ -34,6 +38,9 @@ public class Card
     public List<nullableBool> ifActivableRecord;//用于叠加bool类型的修改
     public bool ifNegated;
     public List<nullableBool> ifNegatedRecord;//用于叠加bool类型的修改
+
+    public List<Buff> buffList;
+    public List<int> buffKeyList;
 
     public Card(int idGet, int belongIDGet, int weaponIDGet, string cardNameGet,  int staminaCostGet, int manaCostGet, string discriptionGet, bool ifQuickGet,int turnLimitGet, int duelLimitGet)
     {
@@ -51,25 +58,34 @@ public class Card
         manaCost_current = ManaCost;
         useCount_turn = 0;
         useCount_duel = 0;
+
         ifQuick_current = IfQuick;
-        ifQuickRecord = new List<nullableBool>();
-        ifQuickRecord.Add(boolToNullable(IfQuick));
-        ifActivable = false;
-        ifActivableRecord = new List<nullableBool>();
-        ifActivableRecord.Add(boolToNullable(ifActivable));
+        ifQuickRecord = new List<nullableBool>
+        {
+            boolToNullable(IfQuick)
+        };
+        ifActivable = true;
+        ifActivableRecord = new List<nullableBool>
+        {
+            boolToNullable(ifActivable)
+        };
         ifNegated = false;
-        ifNegatedRecord = new List<nullableBool>();
-        ifNegatedRecord.Add(boolToNullable(ifNegated));
+        ifNegatedRecord = new List<nullableBool>
+        {
+            boolToNullable(ifNegated)
+        };
     }
 
-    public int setIfQuick(bool result)//返回覆盖队列序号
+    #region Changes with bool variables
+
+    public int SetIfQuickWithReturn(bool result)//返回覆盖队列序号
     {
         ifQuickRecord.Add(boolToNullable(result));
         ifQuick_current = result;
         return ifQuickRecord.Count;
     }
     
-    public void extractIfQuick(int queueNum)//先把取号者设空；从最后往前读，遇到空的就跳过
+    public void ExtractIfQuick(int queueNum)//先把取号者设空；从最后往前读，遇到空的就跳过
     {
         ifQuickRecord[queueNum] = nullableBool.b_null;
         bool ifGetRecord = false;
@@ -89,14 +105,19 @@ public class Card
         }
     }
 
-    public int setIfActivable(bool result)//返回覆盖队列序号
+    public void SetIfQuickWithoutReturn(bool result)
+    {
+        ifQuick_current = result;
+    }
+
+    public int SetIfActivable(bool result)//返回覆盖队列序号
     {
         ifActivableRecord.Add(boolToNullable(result));
         ifActivable = result;
         return ifActivableRecord.Count - 1;
     }
 
-    public void extractIfActivable(int queueNum)//先把取号者设空；从最后往前读，遇到空的就跳过
+    public void ExtractIfActivable(int queueNum)//先把取号者设空；从最后往前读，遇到空的就跳过
     {
         ifActivableRecord[queueNum] = nullableBool.b_null;
         bool ifGetRecord = false;
@@ -116,7 +137,7 @@ public class Card
         }
     }
 
-    public bool getIfActivable()
+    public bool GetIfActivable()
     {
         bool result = ifActivable;
         if (useCount_turn>UseLimit_turn || useCount_duel>UseLimit_duel)
@@ -126,14 +147,14 @@ public class Card
         return result;
     }
 
-    public int setIfNegated(bool result)//返回覆盖队列序号
+    public int SetIfNegated(bool result)//返回覆盖队列序号
     {
         ifNegatedRecord.Add(boolToNullable(result));
         ifNegated = result;
         return ifNegatedRecord.Count;
     }
 
-    public void extractIfNegated(int queueNum)//先把取号者设空；从最后往前读，遇到空的就跳过
+    public void ExtractIfNegated(int queueNum)//先把取号者设空；从最后往前读，遇到空的就跳过
     {
         ifNegatedRecord[queueNum] = nullableBool.b_null;
         bool ifGetRecord = false;
@@ -152,6 +173,46 @@ public class Card
             }
         }
     }
+
+    #endregion
+
+    #region Buff Applies
+
+    public void AddBuff(Buff buff)
+    {
+        buffList.Add(buff);
+        BuffStartEffect(buff);
+    }
+
+    public void RemoveBuff(Buff buff)
+    {
+        buffList.Remove(buff);
+        BuffEndEffect(buff);
+    }
+
+    public void BuffStartEffect(Buff buff)
+    {
+        switch (buff.effectType)
+        {
+            case EffectType.ifQuickChange:
+                buffKeyList.Add(SetIfQuickWithReturn(buff.effectReference != 0));//0为false，1为true
+                break;
+        }
+    }
+
+    public void BuffEndEffect(Buff buff)
+    {
+        switch (buff.effectType)
+        {
+            case EffectType.ifQuickChange:
+                ExtractIfQuick(buffList.IndexOf(buff));
+                break;
+        }
+    }
+
+    #endregion
+
+    #region bool with null
 
     public nullableBool boolToNullable(bool result)
     {
@@ -180,6 +241,9 @@ public class Card
         }
         return retValue;
     }
+
+    #endregion
+
 }
 
 public class AttackCard : Card

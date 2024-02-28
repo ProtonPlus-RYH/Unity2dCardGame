@@ -22,16 +22,20 @@ public class Player : MonoBehaviour
     public TextMeshProUGUI LifePointTMP;
     public TextMeshProUGUI StaminaPointTMP;
     public TextMeshProUGUI ManaPointTMP;
-    public TextMeshProUGUI DeckCountTMP;
-    public TextMeshProUGUI GraveCountTMP;
-
-    public Transform Hands;
-    public Transform Deck;
-    public Transform Grave;
-    public Transform FieldZone;
     public RectTransform LifeMask;
     public RectTransform StaminaMask;
     public RectTransform ManaMask;
+
+    public TextMeshProUGUI DeckCountTMP;
+    public TextMeshProUGUI GraveCountTMP;
+    public Transform handZoneTransform;
+    public Transform deckZoneTransform;
+    public Transform graveZoneTransform;
+    public Transform fieldZoneTransform;
+    public Zone handZone;
+    public Zone deckZone;
+    public Zone graveZone;
+    public Zone fieldZone;
 
     public GameObject CardPrefab;
 
@@ -60,16 +64,16 @@ public class Player : MonoBehaviour
     }
 
 
-    public void moveToDeckChange(GameObject card)//卡牌进入卡组时翻面，转向等
+    public void moveToDeckChange(GameObject card)//卡牌进入卡组时翻面
     {
         card.transform.Find("Informations").gameObject.SetActive(false);
         card.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 180f, 0f); //旋转使之面朝下
     }
 
-    public void moveOutFromDeckChange(GameObject card)//卡牌退出卡组时翻面，转向等
+    public void moveOutFromDeckChange(GameObject card)//卡牌退出卡组时翻面
     {
         card.transform.Find("Informations").gameObject.SetActive(true);
-        card.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 0f, -90f);
+        card.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 0f, 0f);
     }
 
     public GameObject cardGenerate(int id, Transform parent)//生成单卡
@@ -84,46 +88,46 @@ public class Player : MonoBehaviour
 
     public void handSpaceFix()//间距调整
     {
-        int handCount = Hands.childCount;
+        int handCount = handZone.cardCount();
         float space = 25;
         if (handCount > 1)
         {
-            space = (Hands.GetComponent<RectTransform>().rect.width - 200 * handCount) / (handCount - 1);
+            space = (handZoneTransform.GetComponent<RectTransform>().rect.width - 200 * handCount) / (handCount - 1);
         }
         if (space < 25)
         {
-            Hands.GetComponent<GridLayoutGroup>().spacing = new Vector2(space, 0);
+            handZoneTransform.GetComponent<GridLayoutGroup>().spacing = new Vector2(space, 0);
         }
         else
         {
-            Hands.GetComponent<GridLayoutGroup>().spacing = new Vector2(25, 0);
+            handZoneTransform.GetComponent<GridLayoutGroup>().spacing = new Vector2(25, 0);
         }
     }
 
     public void handGet(GameObject card)//手牌从单卡原来所在区域获得单卡
     {
         Transform fromWhere = card.transform.parent;
+        card.transform.SetParent(handZoneTransform);
         if(fromWhere != null)
         {
-            if(fromWhere == Deck)
+            if(fromWhere == deckZoneTransform)
             {
                 moveOutFromDeckChange(card);
-                DeckCountTMP.text = Deck.childCount.ToString();
+                DeckCountTMP.text = deckZone.cardCount().ToString();
             }
-            else if(fromWhere == Grave)
+            else if(fromWhere == graveZoneTransform)
             {
-                GraveCountTMP.text = Grave.childCount.ToString();
+                GraveCountTMP.text = graveZone.cardCount().ToString();
             }
         }
-        card.transform.SetParent(Hands);
         handSpaceFix();
     }
 
     public void handRemove(int orderInHand)//移除手牌单卡
     {
-        if(orderInHand < Hands.childCount)
+        if(orderInHand < handZone.cardCount())
         {
-            Transform removingCard = Hands.GetChild(orderInHand).transform;
+            Transform removingCard = handZoneTransform.GetChild(orderInHand).transform;
             removingCard.SetParent(null);
             Destroy(removingCard.gameObject);
         }
@@ -139,34 +143,33 @@ public class Player : MonoBehaviour
         int id = card.GetComponent<CardDisplay>().card.CardID;
 
         Transform fromWhere = card.transform.parent;
+        card.transform.SetParent(deckZoneTransform);
         if(fromWhere != null)
         {
-            if  (fromWhere == Grave)
+            if  (fromWhere == graveZoneTransform)
             {
-                GraveCountTMP.text = Grave.childCount.ToString();
+                GraveCountTMP.text = graveZone.cardCount().ToString();
             }
-            else if (fromWhere == Hands)
+            else if (fromWhere == handZoneTransform)
             {
                 handSpaceFix();
             }
         }
-        
-        card.transform.SetParent(Deck);
         if (!ifBottom)
         {
             card.transform.SetSiblingIndex(0);
         }
-        DeckCountTMP.text = Deck.childCount.ToString();
+        DeckCountTMP.text = deckZone.cardCount().ToString();
     }
 
     public void deckRemove(int orderInDeck)//移除卡组单卡
     {
-        if(orderInDeck < Deck.childCount)
+        if(orderInDeck < deckZone.cardCount())
         {
-            Transform removingCard = Deck.GetChild(orderInDeck).transform;
+            Transform removingCard = deckZoneTransform.GetChild(orderInDeck).transform;
             removingCard.SetParent(null);
             Destroy(removingCard.gameObject);
-            DeckCountTMP.text = Deck.childCount.ToString();
+            DeckCountTMP.text = deckZone.cardCount().ToString();
         }
         else
         {
@@ -177,30 +180,30 @@ public class Player : MonoBehaviour
     public void graveGet(GameObject card)//墓地从单卡原来所在区域获得单卡
     {
         Transform fromWhere = card.transform.parent;
+        card.transform.SetParent(graveZoneTransform);
         if(fromWhere != null)
         {
-            if (fromWhere == Deck)
+            if (fromWhere == deckZoneTransform)
             {
                 moveOutFromDeckChange(card);
-                DeckCountTMP.text = Deck.childCount.ToString();
+                DeckCountTMP.text = deckZone.cardCount().ToString();
             }
-            else if (fromWhere == Hands)
+            else if (fromWhere == handZoneTransform)
             {
                 handSpaceFix();
             }
         }
-        card.transform.SetParent(Grave);
-        GraveCountTMP.text = Grave.childCount.ToString();
+        GraveCountTMP.text = graveZone.cardCount().ToString();
     }
 
     public void graveRemove(int orderInGrave)//移除墓地单卡
     {
-        if (orderInGrave < Grave.childCount)
+        if (orderInGrave < graveZone.cardCount())
         {
-            Transform removingCard = Deck.GetChild(orderInGrave).transform;
+            Transform removingCard = deckZoneTransform.GetChild(orderInGrave).transform;
             removingCard.SetParent(null);
             Destroy(removingCard.gameObject);
-            GraveCountTMP.text = Grave.childCount.ToString();
+            GraveCountTMP.text = graveZone.cardCount().ToString();
         }
         else
         {
@@ -211,30 +214,30 @@ public class Player : MonoBehaviour
     public void fieldGet(GameObject card)//墓地从单卡原来所在区域获得单卡
     {
         Transform fromWhere = card.transform.parent;
+        card.transform.SetParent(fieldZoneTransform);
         if (fromWhere != null)
         {
-            if (fromWhere == Deck)
+            if (fromWhere == deckZoneTransform)
             {
                 moveOutFromDeckChange(card);
-                DeckCountTMP.text = Deck.childCount.ToString();
+                DeckCountTMP.text = deckZone.cardCount().ToString();
             }
-            else if (fromWhere == Grave)
+            else if (fromWhere == graveZoneTransform)
             {
-                GraveCountTMP.text = Grave.childCount.ToString();
+                GraveCountTMP.text = graveZone.cardCount().ToString();
             }
-            else if (fromWhere == Hands)
+            else if (fromWhere == handZoneTransform)
             {
                 handSpaceFix();
             }
         }
-        card.transform.SetParent(FieldZone);
     }
 
     public void fieldRemove()//移除使用中单卡
     {
-        if (FieldZone.childCount != 0)
+        if (fieldZone.cardCount() != 0)
         {
-            Transform removingCard = FieldZone.GetChild(0).transform;
+            Transform removingCard = fieldZoneTransform.GetChild(0).transform;
             removingCard.SetParent(null);
             Destroy(removingCard.gameObject);
         }
@@ -246,25 +249,25 @@ public class Player : MonoBehaviour
 
     public void getDeck(string deckName)//初始化卡组
     {
-        for (int i = 0; i < Deck.childCount; i++)
+        for (int i = 0; i < deckZone.cardCount(); i++)
         {
-            Destroy(Deck.GetChild(i).gameObject);
+            Destroy(deckZoneTransform.GetChild(i).gameObject);
         }
         List<int> deck = library.readDeck(deckName);
         for(int i=0; i<deck.Count; i++)
         {
-            GameObject newCard = cardGenerate(deck[i], Deck);
+            GameObject newCard = cardGenerate(deck[i], deckZoneTransform);
             deckGet(newCard, true);
         }
     }
 
     public void shuffleDeck()//洗牌
     {
-        for (int i = 0; i < Deck.childCount; i++)
+        for (int i = 0; i < deckZone.cardCount(); i++)
         {
-            int randomCard = UnityEngine.Random.Range(0, Deck.childCount);
-            GameObject randomCardObj = Deck.GetChild(randomCard).gameObject;
-            Deck.GetChild(i).transform.SetSiblingIndex(randomCard);
+            int randomCard = UnityEngine.Random.Range(0, deckZone.cardCount());
+            GameObject randomCardObj = deckZoneTransform.GetChild(randomCard).gameObject;
+            deckZoneTransform.GetChild(i).transform.SetSiblingIndex(randomCard);
             randomCardObj.transform.SetSiblingIndex(i);
         }
     }
@@ -273,17 +276,17 @@ public class Player : MonoBehaviour
 
     public void drawMultipleCard(int num)
     {
-        if (num > Deck.childCount)
+        if (num > deckZoneTransform.childCount)
         {
-            num = Deck.childCount;
+            num = deckZoneTransform.childCount;
         }
         invokeCount = num;
-        InvokeRepeating("drawCard", 0f, 0.8f);
+        InvokeRepeating("DrawCard", 0f, 0.8f);
     }
 
-    public void drawCard()
+    public void DrawCard()
     {
-        GameObject card = Deck.GetChild(0).gameObject;
+        GameObject card = deckZoneTransform.GetChild(0).gameObject;
         Vector3 drawShowingPosition = new Vector3(0f, 600f, 0f);
         Vector3 drawShowingRotation = new Vector3(180f, 0f, -90f);
         LeanTween.moveLocal(card, drawShowingPosition, 0.3f);
@@ -296,9 +299,9 @@ public class Player : MonoBehaviour
         invokeCount--;
         if(invokeCount == 0)
         {
-            CancelInvoke("drawCard");
+            CancelInvoke("DrawCard");
         }
-        GameObject card = Deck.GetChild(0).gameObject;
+        GameObject card = deckZoneTransform.GetChild(0).gameObject;
         handGet(card);
     }*/
 

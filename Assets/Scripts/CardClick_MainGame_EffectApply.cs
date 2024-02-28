@@ -18,9 +18,9 @@ public class CardClick_MainGame_EffectApply : MonoBehaviour, IPointerDownHandler
     
     public void OnPointerDown(PointerEventData eventData)
     {
-        Player cardUser = gameObject.transform.parent.parent.parent.gameObject.GetComponent<Player>();
+        Player cardUser = transform.parent.parent.parent.gameObject.GetComponent<Player>();
         Card card = gameObject.GetComponent<CardDisplay>().card;
-        if (card.getIfActivable())
+        if (card.GetIfActivable() && card.ifControlling)
         {
             switch (EffectTransformer.Instance.processPhase)
             {
@@ -46,13 +46,20 @@ public class CardClick_MainGame_EffectApply : MonoBehaviour, IPointerDownHandler
             card.useCount_duel++;
         }
         else if (cardUser == BattleManager_Single.Instance.self && BattleManager_Single.Instance.gamePhase == GamePhase.selfHandDiscarding || cardUser == BattleManager_Single.Instance.opponent && BattleManager_Single.Instance.gamePhase == GamePhase.opponentHandDiscarding)
+        //弃牌阶段
         {
-            BattleManager_Single.Instance.discardCard(cardUser, gameObject.transform.GetSiblingIndex());
-            BattleManager_Single.Instance.handCountCheck();
+            BattleManager_Single.Instance.DiscardCard(cardUser, gameObject.transform.GetSiblingIndex());
+            BattleManager_Single.Instance.HandCountCheck();
         }
         else
         {
-            Debug.Log("还用不了");
+            if (!card.GetIfActivable()) {
+                Debug.Log("被禁用");
+            }
+            if (!card.ifControlling)
+            {
+                Debug.Log("控制权在对手");
+            }
         }
     }
 }

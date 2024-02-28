@@ -2,14 +2,24 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum JudgeTarget
+public enum EffectTarget
 {
-    LP, MaxLP, SP, MaxSP, MP, MaxMP, handCard, handZone, deckCard, deckZone, graveCard, graveZone, fieldCard, fieldZone
+    duelist, LP, MaxLP, SP, MaxSP, MP, MaxMP, handCard, handZone, deckCard, deckZone, graveCard, graveZone, fieldCard, fieldZone
 }
 
 public enum JudgeType
 {
     valueGreaterThan, valueLessThan, valueEqualTo, valueNotEqualTo, cardTypeIs, cardTypeIsNot
+}
+
+public enum EffectType
+{
+    nullEffect, numChange, ifQuickChange, ifActivableChange, ifNegatedChange, useCountINTurnChange, useCountInDuelChange, limitAdd, delayEffect
+}
+
+public enum BuffLast
+{
+    turnLast, actionLast, cardLast, eternal
 }
 
 public enum SelectionType
@@ -22,7 +32,7 @@ public enum SolveTarget
     self, opponent, both
 }
 
-public class EffectList : MonoBehaviour
+public class EffectList// : MonoBehaviour
 {
     public Player getUserByPhase()
     {
@@ -60,23 +70,23 @@ public class EffectList : MonoBehaviour
         selectingType = selectionType;
     }
 
-    public JudgeTarget judgingTarget;//存储执行的判断目标
+    public EffectTarget judgingTarget;//存储执行的判断目标
     public JudgeType judgingType;//存储执行的判断种类
-    public void DoJudge(SolveTarget solveTarget, JudgeTarget judgeTarget, JudgeType judgeType, int judgingReference)
+    public void DoJudge(SolveTarget solveTarget, EffectTarget effectTarget, JudgeType judgeType, int judgingReference)
     {
         Player player = getUserByPhase();
-        Card playerCard = player.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+        Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
         if (!playerCard.ifNegated)
         {
             //EffectTransformer.Instance.ifPaused = true;
             //EffectTransformer.Instance.ifDoingJudgement = true;
-            judgingTarget = judgeTarget;
+            judgingTarget = effectTarget;
             judgingType = judgeType;
-            switch (judgeTarget)//可能性太多了要用到再加
+            switch (effectTarget)//可能性太多了要用到再加
             {
-                case JudgeTarget.fieldCard:
+                case EffectTarget.fieldCard:
                     bool ifOpponentUsedCard = false;
-                    if (player.opponent.FieldZone.childCount != 0)
+                    if (player.opponent.fieldZone.cardCount() != 0)
                     {
                         ifOpponentUsedCard = true;
                     }
@@ -89,7 +99,7 @@ public class EffectList : MonoBehaviour
                                 {
                                     if (solveTarget == SolveTarget.opponent)
                                     {
-                                        if (player.opponent.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card.GetType() == typeof(AttackCard))
+                                        if (player.opponent.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card.GetType() == typeof(AttackCard))
                                         {
                                             EffectTransformer.Instance.judgeResult = true;
                                         }else
@@ -110,6 +120,88 @@ public class EffectList : MonoBehaviour
         }
     }
 
+
+    public void GiveBuff(SolveTarget solveTarget, EffectTarget effectTarget, EffectType effectType, int effectReference, List<BuffLast> buffLast, List<int> lastReference)
+    {
+        Player player = getUserByPhase();
+        Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+        if (!playerCard.ifNegated)
+        {
+            switch (effectTarget)
+            {
+                case EffectTarget.duelist:
+                    break;
+                case EffectTarget.LP:
+                    break;
+                case EffectTarget.MaxLP:
+                    break;
+                case EffectTarget.SP:
+                    break;
+                case EffectTarget.MaxSP:
+                    break;
+                case EffectTarget.MP:
+                    break;
+                case EffectTarget.MaxMP:
+                    break;
+                case EffectTarget.deckCard:
+                    break;
+                case EffectTarget.handCard:
+                    break;
+                case EffectTarget.graveCard:
+                    break;
+                case EffectTarget.fieldCard:
+                    break;
+                case EffectTarget.handZone:
+                    if(solveTarget == SolveTarget.opponent || solveTarget == SolveTarget.both)
+                    {
+                        player.opponent.handZone.AddBuff(new Buff(solveTarget, effectTarget, effectType, effectReference, buffLast, lastReference));
+                    }
+                    break;
+                /*default://区域向效果
+
+                    EffectForZone(solveTarget, effectTarget, effectType, effectReference, buffLast, lastReference);
+
+                    break;*/
+            }
+        }
+    }
+
+    /*public void EffectForZone(SolveTarget solveTarget, EffectTarget effectTarget, EffectType effectType, int effectReference, List<BuffLast> buffLast, List<int> lastReference)
+    {
+        Player player = getUserByPhase();
+        Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+        if (!playerCard.ifNegated)
+        {
+            switch (effectTarget)
+            {
+                case EffectTarget.handZone:
+                    switch (effectType)
+                    {
+                        case EffectType.ifQuickChange:
+                            if(solveTarget == SolveTarget.opponent || solveTarget == SolveTarget.both) 
+                            {
+                                Buff buff = new Buff(player, solveTarget, effectTarget, effectType, effectReference, buffLast, lastReference);
+                                player.opponent.handZoneTransform.gameObject.GetComponent<Zone>().AddBuff(buff);
+                            }
+                            break;
+                    }
+                    break;
+                case EffectTarget.deckZone:
+
+                    break;
+                case EffectTarget.graveZone:
+
+                    break;
+                case EffectTarget.fieldZone:
+
+                    break;
+                default:
+                    Debug.Log("不是区域");
+                    break;
+            }
+        }
+    }*/
+
     #region common effects
 
     public void MoveForward(SolveTarget solveTarget, bool ifUseStamina, int num, bool ifJudged)
@@ -117,22 +209,21 @@ public class EffectList : MonoBehaviour
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = getUserByPhase();
-            Card playerCard = player.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
             if (!playerCard.ifNegated)
             {
                 if (ifUseStamina)
                 {
-                    Player activer = getUserByPhase();
                     if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
                     {
-                        BattleManager_Single.Instance.changeSP(activer, num * (-1));
+                        BattleManager_Single.Instance.ChangeSP(player, num * (-1));
                     }
                     if (solveTarget == SolveTarget.opponent || solveTarget == SolveTarget.both)
                     {
-                        BattleManager_Single.Instance.changeSP(activer.opponent, num * (-1));
+                        BattleManager_Single.Instance.ChangeSP(player.opponent, num * (-1));
                     }
                 }
-                BattleManager_Single.Instance.changeDistance(num * (-1));
+                BattleManager_Single.Instance.ChangeDistance(num * (-1));
             }
             else
             {
@@ -146,22 +237,21 @@ public class EffectList : MonoBehaviour
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = getUserByPhase();
-            Card playerCard = player.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
             if (!playerCard.ifNegated)
             {
                 if (ifUseStamina)
                 {
-                    Player activer = getUserByPhase();
                     if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
                     {
-                        BattleManager_Single.Instance.changeSP(activer, num * (-1));
+                        BattleManager_Single.Instance.ChangeSP(player, num * (-1));
                     }
                     if (solveTarget == SolveTarget.opponent || solveTarget == SolveTarget.both)
                     {
-                        BattleManager_Single.Instance.changeSP(activer.opponent, num * (-1));
+                        BattleManager_Single.Instance.ChangeSP(player.opponent, num * (-1));
                     }
                 }
-                BattleManager_Single.Instance.changeDistance(num);
+                BattleManager_Single.Instance.ChangeDistance(num);
             }
             else
             {
@@ -175,7 +265,7 @@ public class EffectList : MonoBehaviour
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = getUserByPhase();
-            Card playerCard = player.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
             var attackCard = playerCard as AttackCard;
             int damage = attackCard.attackPower_current;
             int distance = attackCard.distance_current;
@@ -205,7 +295,7 @@ public class EffectList : MonoBehaviour
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = getUserByPhase();
-            Card playerCard = player.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
             if (!playerCard.ifNegated)
             {
                 //距离计算
@@ -232,16 +322,16 @@ public class EffectList : MonoBehaviour
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = getUserByPhase();
-            Card playerCard = player.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
             if (!playerCard.ifNegated)
             {
                 if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
                 {
-                    BattleManager_Single.Instance.changeLP(player, num * (-1));
+                    BattleManager_Single.Instance.ChangeLP(player, num * (-1));
                 }
                 if (solveTarget == SolveTarget.opponent || solveTarget == SolveTarget.both)
                 {
-                    BattleManager_Single.Instance.changeLP(player.opponent, num * (-1));
+                    BattleManager_Single.Instance.ChangeLP(player.opponent, num * (-1));
                 }
             }
             else
@@ -256,16 +346,16 @@ public class EffectList : MonoBehaviour
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = getUserByPhase();
-            Card playerCard = player.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
             if (!playerCard.ifNegated)
             {
                 if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
                 {
-                    BattleManager_Single.Instance.changeLP(player, num);
+                    BattleManager_Single.Instance.ChangeLP(player, num);
                 }
                 if (solveTarget == SolveTarget.opponent || solveTarget == SolveTarget.both)
                 {
-                    BattleManager_Single.Instance.changeLP(player.opponent, num);
+                    BattleManager_Single.Instance.ChangeLP(player.opponent, num);
                 }
             }
             else
@@ -280,16 +370,16 @@ public class EffectList : MonoBehaviour
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = getUserByPhase();
-            Card playerCard = player.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
             if (!playerCard.ifNegated)
             {
                 if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
                 {
-                    BattleManager_Single.Instance.changeSP(player, num);
+                    BattleManager_Single.Instance.ChangeSP(player, num);
                 }
                 if (solveTarget == SolveTarget.opponent || solveTarget == SolveTarget.both)
                 {
-                    BattleManager_Single.Instance.changeSP(player.opponent, num);
+                    BattleManager_Single.Instance.ChangeSP(player.opponent, num);
                 }
             }
             else
@@ -304,16 +394,16 @@ public class EffectList : MonoBehaviour
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = getUserByPhase();
-            Card playerCard = player.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
             if (!playerCard.ifNegated)
             {
                 if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
                 {
-                    BattleManager_Single.Instance.changeMP(player, num);
+                    BattleManager_Single.Instance.ChangeMP(player, num);
                 }
                 if (solveTarget == SolveTarget.opponent || solveTarget == SolveTarget.both)
                 {
-                    BattleManager_Single.Instance.changeMP(player.opponent, num);
+                    BattleManager_Single.Instance.ChangeMP(player.opponent, num);
                 }
             }
             else
@@ -323,21 +413,21 @@ public class EffectList : MonoBehaviour
         }
     }
 
-    public void drawCard(SolveTarget solveTarget, int num, bool ifJudged)
+    public void DrawCard(SolveTarget solveTarget, int num, bool ifJudged)
     {
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = getUserByPhase();
-            Card playerCard = player.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
             if (!playerCard.ifNegated)
             {
                 if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
                 {
-                    BattleManager_Single.Instance.drawCard(player, num);
+                    BattleManager_Single.Instance.DrawCard(player, num);
                 }
                 if (solveTarget == SolveTarget.opponent || solveTarget == SolveTarget.both)
                 {
-                    BattleManager_Single.Instance.drawCard(player.opponent, num);
+                    BattleManager_Single.Instance.DrawCard(player.opponent, num);
                 }
             }
             else
@@ -346,39 +436,15 @@ public class EffectList : MonoBehaviour
             }
         }
     }
-
-    /*public void setAllCardIfQuick(SolveTarget solveTarget, bool result, int place, int type)
-    {
-        Player player = getUserByPhase();
-        Card playerCard = player.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
-        if (!playerCard.ifNegated)
-        {
-            switch (place)
-            {
-                case 0:
-
-                    break;
-                case 1:
-
-                    break;
-                case 2:
-
-                    break;
-                case 3:
-
-                    break;
-            }
-        }
-    }*/
 
     public void Negate(SolveTarget solveTarget, bool ifJudged)
     {
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = getUserByPhase();
-            Card playerCard = player.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
             bool ifOpponentCardExists = false;
-            if (player.opponent.FieldZone.childCount != 0)
+            if (player.opponent.fieldZone.cardCount() != 0)
             {
                 ifOpponentCardExists = true;
             }
@@ -387,11 +453,11 @@ public class EffectList : MonoBehaviour
             {
                 if (solveTarget == SolveTarget.opponent && ifOpponentCardExists || solveTarget == SolveTarget.both && ifOpponentCardExists)
                 {
-                    int queueNum = player.opponent.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card.setIfNegated(true);
+                    int queueNum = player.opponent.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card.SetIfNegated(true);
                 }
                 if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
                 {
-                    int queueNum = playerCard.setIfNegated(true);
+                    int queueNum = playerCard.SetIfNegated(true);
                 }
             }
             else
@@ -401,12 +467,12 @@ public class EffectList : MonoBehaviour
         }
     }
 
-    public void cannotBeCountered(bool ifJudged)
+    public void CannotBeCountered(bool ifJudged)
     {
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = getUserByPhase();
-            Card playerCard = player.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
             if (!playerCard.ifNegated)
             {
                 if (EffectTransformer.Instance.processPhase == SolvingProcess.activationDeclare)
@@ -425,12 +491,12 @@ public class EffectList : MonoBehaviour
         }
     }
 
-    public void counterDelayed(bool ifJudged)
+    public void CounterDelayed(bool ifJudged)
     {
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = getUserByPhase();
-            Card playerCard = player.FieldZone.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
             if (!playerCard.ifNegated)
             {
                 EffectTransformer.Instance.ifCounterDelayed = true;
@@ -443,6 +509,5 @@ public class EffectList : MonoBehaviour
     }
 
     #endregion
-
 
 }

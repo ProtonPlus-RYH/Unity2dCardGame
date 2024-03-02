@@ -182,7 +182,7 @@ public class DeckManager : MonoBehaviour
 
     public void deleteCardFromDeck(int cardOrderNum)
     {
-        if(cardOrderNum >= editingDeckList.Count - 1)
+        if(cardOrderNum < editingDeckList.Count)
         {
             Destroy(deckPanel.GetChild(cardOrderNum).gameObject);
             editingDeckList.RemoveAt(cardOrderNum);

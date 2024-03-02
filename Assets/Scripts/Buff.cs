@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,11 +6,6 @@ using UnityEngine;
 //具体效果都写在预制件的脚本里面,计时存储在这个里面
 public class Buff
 {
-    /*public bool ifTurn;
-    public bool ifAction;
-    public bool ifCard;
-    public bool ifEternal;
-    public List<int> effectKey;*/
     public int turnLast;
     public int actionLast;
     public int cardLast;
@@ -37,6 +33,18 @@ public class Buff
                 case BuffLast.turnLast:
                     turnLast = lastReference[i];
                     break;
+                case BuffLast.turnLast_opponent:
+                    bool a = (BattleManager_Single.Instance.turnCount % 2 == 1);//奇数回合还是偶数回合
+                    bool b = EffectTransformer.Instance.getUserByPhase().ifGoingFirst;//被施加buff的是不是先手
+                    if(a==b)
+                    {
+                        turnLast = lastReference[i] * 2 - 1;
+                    }
+                    else
+                    {
+                        turnLast = lastReference[i] * 2 - 2;
+                    }
+                    break;
                 case BuffLast.actionLast:
                     actionLast = lastReference[i];
                     break;
@@ -45,82 +53,43 @@ public class Buff
                     break;
             }
         }
-        /*ifTurn = false;
-        ifAction = false;
-        ifCard = false;
-        ifEternal = false;
-
-        for (int i = 0; i < buffLast.Count; i++)
-        {
-            if (buffLast[i] == BuffLast.turnLast)
-            {
-                ifTurn = true;
-                turnLast = lastReference[i];
-            }
-            if (buffLast[i] == BuffLast.cardLast)
-            {
-                ifCard = true;
-                cardLast = lastReference[i];
-            }
-            if (buffLast[i] == BuffLast.actionLast)
-            {
-                ifAction = true;
-                actionLast = lastReference[i];
-            }
-            if (buffLast[i] == BuffLast.eternal)
-            {
-                ifEternal = true;
-            }
-        }
-        EffectApply(player, solveTarget, effectTarget, effectType, effectReference);*/
     }
-/*
-    public void EffectApply(Player player, SolveTarget solveTarget, EffectTarget effectTarget, EffectType effectType, int effectReference)
+
+    public void CountdownDecrease(BuffLast lastType)
     {
-        switch (effectType)
+        switch (lastType)
         {
-            case EffectType.ifQuickChange:
-                switch (effectTarget)
+            case BuffLast.turnLast:
+                turnLast--;
+                if(turnLast < 0)
                 {
-                    case EffectTarget.handZone:
-                        if (solveTarget == SolveTarget.opponent || solveTarget == SolveTarget.both)
-                        {
-                            for (int i = 0; i < player.opponent.handZoneTransform.childCount; i++)
-                            {
-                                effectKey.Add(player.opponent.handZoneTransform.GetChild(i).gameObject.GetComponent<CardDisplay>().card.SetIfQuickWithReturn(effectReference != 0));//0为false，1为true
-                            }
-                        }
-                        break;
+                    BuffEnd?.Invoke(this,new BuffEventArgs(this));
+                }
+                break;
+            case BuffLast.actionLast:
+                actionLast--;
+                if(actionLast < 0)
+                {
+                    BuffEnd?.Invoke(this, new BuffEventArgs(this));
+                }
+                break;
+            case BuffLast.cardLast:
+                cardLast--;
+                if(cardLast < 0)
+                {
+                    BuffEnd?.Invoke(this, new BuffEventArgs(this));
                 }
                 break;
         }
     }
 
-    public void EffectEnd(Player player, SolveTarget solveTarget, EffectTarget effectTarget, EffectType effectType, int effectReference)
+    public event EventHandler<BuffEventArgs> BuffEnd;
+    public class BuffEventArgs : EventArgs
     {
-        switch (effectType)
+        public Buff buff;
+        public BuffEventArgs(Buff buffInput)
         {
-            case EffectType.ifQuickChange:
-                switch (effectTarget)
-                {
-                    case EffectTarget.handZone:
-                        if (solveTarget == SolveTarget.opponent || solveTarget == SolveTarget.both)
-                        {
-                            for (int i = 0; i < player.opponent.handZoneTransform.childCount; i++)
-                            {
-                                
-                            }
-                        }
-                        break;
-                }
-                break;
+            buff = buffInput;
         }
-    }*/
-
-    /*public void countDownDecreaseWhen(BuffLastType buffType)
-    {
-        
-        
-    }*/
-
+    }
 }

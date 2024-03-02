@@ -5,8 +5,8 @@ using TMPro;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using System;
-using System.IO;
-using XLua;
+using System.Threading;
+using UnityEngine.SceneManagement;
 
 
 public enum GamePhase
@@ -26,8 +26,12 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     public int distanceInGame;
     public int maxHand;
 
+    public int turnCount;
+    public bool ifGameOver;
+
     public int firstPlayerStartHand;
     public int secondPlayerStartHand;
+
 
     //public List<int> phaseChangeCardActivableKey;
 
@@ -36,22 +40,16 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     #region UIs
 
     public TextMeshProUGUI DistanceTMP;
-    
     public TextMeshProUGUI PhaseTMP;
 
-    public TextMeshProUGUI cardNameText;
-    public TextMeshProUGUI discriptionText;
-    public TextMeshProUGUI staminaCostText;
-    public TextMeshProUGUI manaCostText;
-    public TextMeshProUGUI attackPowerText;
-    public TextMeshProUGUI attackPowerTitleText;
-    public TextMeshProUGUI distanceText;
-    public TextMeshProUGUI distanceTitleText;
+    public TextMeshProUGUI quitTMP;
 
     public Transform DistanceBar;
     public GameObject groundBlock;
     public GameObject infoDisplayer;
     public GameObject textTMP;
+
+    public GameObject InfoDisplayer;
 
     public GameObject selfPlayerPrefab; //存储我方玩家数据
     public GameObject opponentPlayerPrefab;  //存储对手玩家数据
@@ -60,6 +58,8 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     
     public CardPool library;
     public EffectTransformer effectManager;
+
+    public List<Buff> buffListInGame;
 
     public Player self;
     public Player opponent;
@@ -70,13 +70,19 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     void Start()
     {
+        MoveForwardClick += Action_MoveForward;
+        MoveBackClick += Action_MoveBack;
+        QuitClick += QuitGame;
+        ifGameOver = false;
         library.getAllCards();
         self = selfPlayerPrefab.GetComponent<Player>();
         opponent = opponentPlayerPrefab.GetComponent<Player>();
-        self.getDeck("01");
-        opponent.getDeck("01");
+        buffListInGame = new List<Buff>();
+        self.getDeck(PlayerPrefs.GetString("SelfDeck"));
+        opponent.getDeck(PlayerPrefs.GetString("OpponentDeck"));
         self.shuffleDeck();
         opponent.shuffleDeck();
+        turnCount = 1;
 
         distanceInGame = 0;
         ChangeDistance(maxDistance);
@@ -84,55 +90,74 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
         self.initialStatusSet(maxLifePoint, maxStaminaPoint, maxManaPoint);
         opponent.initialStatusSet(maxLifePoint, maxStaminaPoint, maxManaPoint);
+        PhaseTMP.text = "游戏开始";
 
         //投硬币决定先后手
         self.ifGoingFirst = true;
-        int selfStartHand = firstPlayerStartHand;
+        controller = self;
         opponent.ifGoingFirst = false;
-        int opponentStartHand = secondPlayerStartHand;
         if (!coin())
         {
             self.ifGoingFirst = false;
-            selfStartHand = secondPlayerStartHand;
             opponent.ifGoingFirst = true;
-            opponentStartHand = firstPlayerStartHand;
             controller = opponent;
-            DrawCard(self, selfStartHand);
-            DrawCard(opponent, opponentStartHand);
+            firstPlayerCardDraw();
+            Invoke("secondPlayerCardDraw", 0.3f * firstPlayerStartHand + 0.1f);
             //输硬币
-            opponentStandbyPhase();
+            Invoke("opponentStandbyPhase", 0.3f * (firstPlayerStartHand + secondPlayerStartHand));
         }
         else
         {
-            controller = self;
             //赢硬币
-            DrawCard(self, selfStartHand);
-            DrawCard(opponent, opponentStartHand);
-            standbyPhase();
+            firstPlayerCardDraw();
+            Invoke("secondPlayerCardDraw", 0.3f * firstPlayerStartHand + 0.1f);
+            Invoke("standbyPhase", 0.3f * (firstPlayerStartHand + secondPlayerStartHand));
         }
         
     }
 
-    void Update()
+    public void firstPlayerCardDraw()
     {
-        //点击信息框外则卡片信息关闭
-        if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject())
-        {
-            infoDisplayer.SetActive(false);
-        }
+        DrawCard(controller, firstPlayerStartHand);
+        ChangeController();
+    }
+    public void secondPlayerCardDraw()
+    {
+        DrawCard(controller, secondPlayerStartHand);
+        ChangeController();
     }
 
+    void Update()
+    {
+        
+    }
+
+    #region buttons
 
     public void OnClickMoveForward()
     {
-        ChangeDistance(-1);
-        ChangeSP(controller, -1);
+        MoveForwardClick?.Invoke(this, new EventArgs());
+    }
+    public event EventHandler<EventArgs> MoveForwardClick;
+    public void Action_MoveForward(object sender, EventArgs e)
+    {
+        if (EffectTransformer.Instance.processPhase == SolvingProcess.beforeActivation)
+        {
+            MoveForward_Action();
+        }
     }
 
     public void OnClickMoveBack()
     {
-        ChangeDistance(1);
-        ChangeSP(controller, -1);
+        MoveBackClick?.Invoke(this, new EventArgs());
+    }
+    public event EventHandler<EventArgs> MoveBackClick;
+    public void Action_MoveBack(object sender, EventArgs e)
+    {
+        if (EffectTransformer.Instance.processPhase == SolvingProcess.beforeActivation)
+        {
+            MoveBack_Action();
+        }
     }
 
     public void OnClickTurnEnd()
@@ -143,40 +168,59 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
     }
 
+
+    public event EventHandler<EventArgs> QuitClick;
     public void OnClickSurrender()
     {
-        //判定胜负
-
-        //结束游戏
-        gameOver();
+        QuitClick?.Invoke(this, new EventArgs());
     }
-
-
-    public void infoDisplay(Card card)
+    public void QuitGame(object sender, EventArgs e)
     {
-        infoDisplayer.SetActive(true);
-        cardNameText.text = card.CardName;
-        discriptionText.text = card.Discription;
-        staminaCostText.text = card.StaminaCost.ToString();
-        manaCostText.text = card.ManaCost.ToString();
-        if (card.GetType() == typeof(AttackCard))
+        if (ifGameOver)
         {
-            var attackCard = card as AttackCard;
-            attackPowerTitleText.gameObject.SetActive(true);
-            attackPowerText.gameObject.SetActive(true);
-            distanceTitleText.gameObject.SetActive(true);
-            distanceText.gameObject.SetActive(true);
-            attackPowerText.text = attackCard.AttackPower.ToString();
-            distanceText.text = attackCard.Distance.ToString();
+            SceneManager.LoadScene("MenuPage");
         }
-        else if(card.GetType() == typeof(ActionCard))
+        else
         {
-            attackPowerTitleText.gameObject.SetActive(false);
-            attackPowerText.gameObject.SetActive(false);
-            distanceTitleText.gameObject.SetActive(false);
-            distanceText.gameObject.SetActive(false);
+            GameOver(controller.opponent);
         }
     }
+
+    public event EventHandler<EventArgs> CancelClick;
+    public void OnClickCancel()
+    {
+        CancelClick?.Invoke(this, new EventArgs());
+    }
+
+    #endregion
+
+
+    #region Controller Management
+
+    public void OpenControlling()
+    {
+        foreach (var card in controller.holdingCards)
+        {
+            card.ifControlling = true;
+        }
+    }
+
+    public void CloseControlling()
+    {
+        foreach (var card in controller.holdingCards)
+        {
+            card.ifControlling = false;
+        }
+    }
+
+    public void ChangeController()
+    {
+        CloseControlling();
+        controller = controller.opponent;
+        OpenControlling();
+    }
+
+    #endregion
 
 
     #region Phases in Game
@@ -190,9 +234,14 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
             //强制卡组再构筑
             DeckRebuild(self);
         }
-        DrawCard(self, 2);
+        int drawNum = 0;
+        if (turnCount >= 3)
+        {
+            DrawCard(self, 2);
+            drawNum = 2;
+        }
         ChangeSP(self, 5);
-        phasePush();
+        Invoke("phasePush",drawNum * 0.3f);
     }
 
     public void mainPhase()
@@ -221,9 +270,14 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
             //强制卡组再构筑
             DeckRebuild(opponent);
         }
-        DrawCard(opponent, 2);
+        int drawNum = 0;
+        if (turnCount >= 3)
+        {
+            DrawCard(opponent, 2);
+            drawNum = 2;
+        }
         ChangeSP(opponent, 5);
-        phasePush();
+        Invoke("phasePush", drawNum * 0.3f);
     }
 
     public void opponentMainPhase()
@@ -243,9 +297,18 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         HandCountCheck();
     }
 
-    public void gameOver()
+    public void GameOver(Player winner)
     {
+        quitTMP.text = "返回";
+        ifGameOver = true;
         gamePhase = GamePhase.GameOver;
+        string playerName = "下方玩家";
+        if (winner == opponent)
+        {
+            playerName = "上方玩家";
+        }
+        textTMP.GetComponent<TextMeshProUGUI>().text = playerName + "获胜";
+        textTMP.SetActive(true);
     }
 
     public void phasePush()
@@ -279,13 +342,52 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
     }
 
-    #endregion
-
-
-    public void useBuff(int turnLast, int actionLast, bool ifOneChain)//持续回合数，打完几张卡后就消失，是否连锁结束后就消失
+    public void HandCountCheck()
     {
-
+        if (controller.handZone.cardCount() > maxHand)
+        {
+            DiscardRequest();
+        }
+        else
+        {
+            textTMP.SetActive(false);
+            foreach (var buff in BattleManager_Single.Instance.buffListInGame)
+            {
+                if (buff.buffLast.Contains(BuffLast.turnLast) || buff.buffLast.Contains(BuffLast.turnLast_opponent))
+                {
+                    buff.CountdownDecrease(BuffLast.turnLast);
+                }
+            }
+            controller = controller.opponent;
+            turnCount++;
+            phasePush();
+        }
     }
+
+    public void DiscardRequest()
+    {
+        if (gamePhase == GamePhase.EndPhase)
+        {
+            textTMP.GetComponent<TextMeshProUGUI>().text = "请弃置手牌至" + maxHand.ToString() + "张";
+            gamePhase = GamePhase.selfHandDiscarding;
+        }
+        else if (gamePhase == GamePhase.OpponentEndPhase)
+        {
+            textTMP.GetComponent<TextMeshProUGUI>().text = "对手弃置手牌中";
+            gamePhase = GamePhase.opponentHandDiscarding;
+        }
+        textTMP.SetActive(true);
+    }
+
+    public void resetCardCountInTurn(Player player)
+    {
+        foreach (var card in player.holdingCards)
+        {
+            card.useCount_turn = 0;
+        }
+    }
+
+    #endregion
 
 
     #region card treatments
@@ -293,18 +395,9 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     public void DrawCard(Player player, int num)
     {
-        if (num > player.deckZone.cardCount())
-        {
-            num = player.deckZone.cardCount();
-        }
-        for (int i = 0; i < num; i++)
-        {
-            GameObject card = player.deckZoneTransform.GetChild(0).gameObject;
-            player.handGet(card);
-        }
-        //player.drawMultipleCard(num);
+        player.drawMultipleCards(num);
     }
-
+    
     public void DiscardCard(Player player, int orderInHand)
     {
         if (orderInHand < player.handZone.cardCount())
@@ -316,7 +409,6 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         {
             Debug.Log("手牌数量int越界");
         }
-        
     }
 
     public void CardRecycleToDeck(Player player, int orderInGrave, bool ifBottom, bool ifShuffle)
@@ -358,120 +450,9 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
     }
 
-    /*public int BuffCardIfQuick(Card card, bool result)
-    {
-        int retInt = card.SetIfQuickWithReturn(result);
-        return retInt;
-    }*/
-
-    public void HandCountCheck()
-    {
-        if(controller.handZone.cardCount() > maxHand)
-        {
-            DiscardRequest();
-        }
-        else
-        {
-            if (gamePhase == GamePhase.EndPhase || gamePhase == GamePhase.selfHandDiscarding)
-            {
-                textTMP.SetActive(false);
-                controller = opponent;
-                phasePush();
-            }
-            else if(gamePhase == GamePhase.OpponentEndPhase || gamePhase == GamePhase.opponentHandDiscarding)
-            {
-                textTMP.SetActive(false);
-                controller = self;
-                phasePush();
-            }
-        }
-    }
-
-    public void DiscardRequest()
-    {
-        if(gamePhase == GamePhase.EndPhase)
-        {
-            textTMP.GetComponent<TextMeshProUGUI>().text = "请弃置手牌至" + maxHand.ToString() + "张";
-            gamePhase = GamePhase.selfHandDiscarding;
-        }
-        else if(gamePhase == GamePhase.OpponentEndPhase)
-        {
-            textTMP.GetComponent<TextMeshProUGUI>().text = "对手弃置手牌中";
-            gamePhase = GamePhase.opponentHandDiscarding;
-        }
-        textTMP.SetActive(true);
-    }
-/*
-    public void ReturnBuffIfQuick(Card card, int retKey)
-    {
-        card.ExtractIfQuick(retKey);
-    }
-
-    public List<int> SetAllCardUsable(Player player)
-    {
-        List<int> usableKey = new List<int>();
-        foreach(var card in player.holdingCards)
-        {
-            usableKey.Add(card.SetIfActivable(true));
-        }
-        return usableKey;
-    }
-
-    public void ResetAllCardUsable(Player player, List<int> usableKey)
-    {
-        if (phaseChangeCardActivableKey.Count != 0)
-        {
-            for (int i = 0; i < usableKey.Count; i++)
-            {
-                player.holdingCards[i].ExtractIfActivable(usableKey[i]);
-            }
-        }
-        phaseChangeCardActivableKey = new List<int>();
-    }*/
-
-    public void resetCardCountInTurn(Player player)
-    {
-        foreach(var card in player.holdingCards)
-        {
-            card.useCount_turn = 0;
-        }
-    }
     
     #endregion
 
-    public void OpenControlling()
-    {
-        foreach (var card in controller.holdingCards)
-        {
-            card.ifControlling = true;
-        }
-    }
-
-    public void CloseControlling()
-    {
-        foreach (var card in controller.holdingCards)
-        {
-            card.ifControlling = false;
-        }
-    }
-    
-    public void ChangeController()
-    {
-        CloseControlling();
-        controller = controller.opponent;
-        OpenControlling();
-        /*if (phaseChangeCardActivableKey.Count != 0)
-        {
-            ResetAllCardUsable(controller, phaseChangeCardActivableKey);
-            phaseChangeCardActivableKey = SetAllCardUsable(controller.opponent);
-            controller = controller.opponent;
-        }
-        else
-        {
-            phaseChangeCardActivableKey = SetAllCardUsable(controller.opponent);
-            controller = controller.opponent;
-        }*/
-    }
 
     #region numerical changes
 
@@ -488,6 +469,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         player.LifePointTMP.text = player.LP.ToString();
         if (player.LP <= 0)
         {
+            GameOver(player.opponent);
             //判定胜负
         }
     }
@@ -501,7 +483,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
         if (sp + num <0)
         {
-            num = sp;
+            num = -1 * sp;
         }
         float newScale = ((float)sp + (float)num) / (float)maxStaminaPoint;
         player.StaminaMask.localScale = new Vector3(newScale, 1.0f, 1.0f);
@@ -519,7 +501,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
         if (mp + num < 0)
         {
-            num = mp;
+            num = -1 * mp;
         }
         float newScale = ((float)mp + (float)num) / (float)maxManaPoint;
         player.ManaMask.localScale = new Vector3(newScale, 1.0f, 1.0f);
@@ -569,6 +551,38 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
             for (int i = 0; i > num; i--)
             {
                 Destroy(DistanceBar.GetChild(0).gameObject);
+            }
+        }
+    }
+
+    public void MoveForward_Action()
+    {
+        ChangeDistance(-1);
+        ChangeSP(controller, -1);
+        if (EffectTransformer.Instance.processPhase == SolvingProcess.beforeActivation)//效果产生的行动不减倒数
+        {
+            foreach (var buff in buffListInGame)
+            {
+                if (buff.buffLast.Contains(BuffLast.actionLast))
+                {
+                    buff.CountdownDecrease(BuffLast.actionLast);
+                }
+            }
+        }
+    }
+
+    public void MoveBack_Action()
+    {
+        ChangeDistance(1);
+        ChangeSP(controller, -1);
+        if (EffectTransformer.Instance.processPhase == SolvingProcess.beforeActivation)//效果产生的行动不减倒数
+        {
+            foreach (var buff in buffListInGame)
+            {
+                if (buff.buffLast.Contains(BuffLast.actionLast))
+                {
+                    buff.CountdownDecrease(BuffLast.actionLast);
+                }
             }
         }
     }

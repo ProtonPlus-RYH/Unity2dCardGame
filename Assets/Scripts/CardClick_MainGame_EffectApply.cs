@@ -18,9 +18,9 @@ public class CardClick_MainGame_EffectApply : MonoBehaviour, IPointerDownHandler
     
     public void OnPointerDown(PointerEventData eventData)
     {
-        Player cardUser = transform.parent.parent.parent.gameObject.GetComponent<Player>();
+        Player cardUser = transform.parent.parent.parent.GetComponent<Player>();
         Card card = gameObject.GetComponent<CardDisplay>().card;
-        if (card.GetIfActivable() && card.ifControlling)
+        if (card.GetIfActivable() && card.ifControlling && cardUser.SP != 0 && cardUser.MP >= card.manaCost_current)
         {
             switch (EffectTransformer.Instance.processPhase)
             {
@@ -59,6 +59,14 @@ public class CardClick_MainGame_EffectApply : MonoBehaviour, IPointerDownHandler
             if (!card.ifControlling)
             {
                 Debug.Log("控制权在对手");
+            }
+            if (cardUser.SP == 0)
+            {
+                Debug.Log("精力不足");
+            }
+            if (cardUser.MP < card.manaCost_current)
+            {
+                Debug.Log("集中力不足");
             }
         }
     }

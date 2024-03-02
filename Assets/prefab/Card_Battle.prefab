@@ -236,8 +236,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: d9011239ab8bead47af97837231929b0, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -268,6 +268,7 @@ MonoBehaviour:
   attackPowerTitleText: {fileID: 8206084775206584381}
   distanceText: {fileID: 7346616913524403988}
   distanceTitleText: {fileID: 232969432518966080}
+  quickMark: {fileID: 536056202372701888}
 --- !u!114 &-1433538040808782978
 MonoBehaviour:
   m_ObjectHideFlags: 0

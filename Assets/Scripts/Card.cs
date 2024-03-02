@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -58,6 +59,8 @@ public class Card
         manaCost_current = ManaCost;
         useCount_turn = 0;
         useCount_duel = 0;
+        buffList = new List<Buff>();
+        buffKeyList = new List<int>();
 
         ifQuick_current = IfQuick;
         ifQuickRecord = new List<nullableBool>
@@ -82,14 +85,14 @@ public class Card
     {
         ifQuickRecord.Add(boolToNullable(result));
         ifQuick_current = result;
-        return ifQuickRecord.Count;
+        return ifQuickRecord.Count - 1;
     }
     
     public void ExtractIfQuick(int queueNum)//先把取号者设空；从最后往前读，遇到空的就跳过
     {
         ifQuickRecord[queueNum] = nullableBool.b_null;
         bool ifGetRecord = false;
-        int recordCount = ifQuickRecord.Count;
+        int recordCount = ifQuickRecord.Count - 1;
         while(!ifGetRecord)
         {
             if (ifQuickRecord[recordCount] != nullableBool.b_null)
@@ -180,14 +183,29 @@ public class Card
 
     public void AddBuff(Buff buff)
     {
-        buffList.Add(buff);
-        BuffStartEffect(buff);
+        bool cardTypeCheck = true;
+        if (buff.effectType == EffectType.atkChange)
+        {
+            if (GetType() != typeof(AttackCard))
+            {
+                cardTypeCheck = false;
+            }
+        }
+        if (cardTypeCheck)
+        {
+            buffList.Add(buff);
+            BuffStartEffect(buff);
+        }
+        
     }
 
     public void RemoveBuff(Buff buff)
     {
-        buffList.Remove(buff);
-        BuffEndEffect(buff);
+        if (buffList.Contains(buff))
+        {
+            BuffEndEffect(buff);
+            buffList.Remove(buff);
+        }
     }
 
     public void BuffStartEffect(Buff buff)
@@ -197,6 +215,13 @@ public class Card
             case EffectType.ifQuickChange:
                 buffKeyList.Add(SetIfQuickWithReturn(buff.effectReference != 0));//0为false，1为true
                 break;
+            case EffectType.atkChange:
+                if(GetType() == typeof(AttackCard))
+                {
+                    var attackCard = this as AttackCard;
+                    attackCard.attackPower_current += buff.effectReference;
+                }
+                break;
         }
     }
 
@@ -205,7 +230,15 @@ public class Card
         switch (buff.effectType)
         {
             case EffectType.ifQuickChange:
-                ExtractIfQuick(buffList.IndexOf(buff));
+                ExtractIfQuick(buffKeyList[buffList.IndexOf(buff)]);
+                buffKeyList.RemoveAt(buffList.IndexOf(buff));
+                break;
+            case EffectType.atkChange:
+                if (GetType() == typeof(AttackCard))
+                {
+                    var attackCard = this as AttackCard;
+                    attackCard.attackPower_current -= buff.effectReference;
+                }
                 break;
         }
     }

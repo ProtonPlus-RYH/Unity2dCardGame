@@ -1,25 +1,22 @@
 local effectList = CS.EffectList()
-ifCountered = true
+
 
 function ActivationDeclare()
-effectList:CannotBeCountered(false)
+--把对方的卡都设置成ifQuick = true
+local buffLastList={CS.BuffLast.actionLast}
+local lastReferenceList={0}
+effectList:GiveBuff(CS.SolveTarget.opponent,CS.EffectTarget.handZone,CS.EffectType.ifQuickChange,1,buffLastList,lastReferenceList,false)
 end
 
 function CounterDeclare()
 end
 
 function WhileNotCountered()
-ifCountered = false
 end
 
 function WhileCountered()
-effectList:DoJudge(CS.SolveTarget.opponent, CS.EffectTarget.fieldCard, CS.JudgeType.cardTypeIs, 1)
-effectList:Negate(CS.SolveTarget.opponent,true)
 end
 
 function Resolve()
-if(ifCountered) then
-effectList:DoJudge(CS.SolveTarget.opponent, CS.EffectTarget.fieldCard, CS.JudgeType.cardTypeIs, 1)
-effectList:Negate(CS.SolveTarget.opponent,true)
-end
+effectList:RestoreMP(CS.SolveTarget.self,5,false)
 end

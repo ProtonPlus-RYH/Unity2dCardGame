@@ -4,6 +4,8 @@ using UnityEngine;
 using System;
 using System.IO;
 using XLua;
+using TMPro;
+using Unity.VisualScripting;
 
 public enum SolvingProcess
     {
@@ -12,11 +14,10 @@ public enum SolvingProcess
 
 public class EffectTransformer : MonoSingleton<EffectTransformer>
 {
-    public GameObject CounterAskDialog;
+    public GameObject AskingDialog;
+    public TextMeshProUGUI AskingDialog_Title;
+    public TextMeshProUGUI AskingDialog_ButtonText;
     
-    //public Player player_Active;
-    //public Player player_Counter;
-
     public Card activingCard;
     public Card counterCard;
     public GameObject activingCardPrefab;
@@ -34,6 +35,7 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
 
     public bool ifPaused;
     public bool ifDoingSelection;
+    public int selectCount;
     public bool judgeResult;
 
     void Start()
@@ -45,6 +47,7 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         ifPaused = false;
         ifDoingSelection = false;
         judgeResult = false;
+        BattleManager_Single.Instance.CancelClick += askCounter_NoCounter;
     }
 
     void Update()
@@ -65,17 +68,6 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         return result;
     }
 
-    byte[] CardLuaLoader1(ref string fileName1)//卡牌Lua文件读取
-    {
-        string path = "Assets\\ResourceFiles\\CardScripts\\" + fileName1 + ".lua";
-        byte[] result = File.ReadAllBytes(path);
-        if (!File.Exists(path))
-        {
-            result = null;
-        }
-        return result;
-    }
-
     public void useCard(GameObject cardPrefab)//卡牌效果发动时
     {
         processPhase = SolvingProcess.activationDeclare;
@@ -84,6 +76,7 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         int id = card.CardID;
         activingCard = card;
         activingCardPrefab = cardPrefab;
+        BattleManager_Single.Instance.InfoDisplayer.GetComponent<InfoDisplay>().infoDisplay(card);
         Debug.Log("宣言发动");
         //卡牌使用计数增加
         card.useCount_turn++;
@@ -92,7 +85,6 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         luaenv_Active = new LuaEnv();
         luaenv_Active.AddLoader(CardLuaLoader);
         luaenv_Active.DoString("require('Card_" + id.ToString() + "')");
-        luaenv_Active.Global.Set("processPhase", typeof(SolvingProcess));
         Action activationDeclare = luaenv_Active.Global.Get<Action>("ActivationDeclare");
         LuaFunction D_activationDeclare = luaenv_Active.Global.Get<LuaFunction>("ActivationDeclare");
         D_activationDeclare.Call();
@@ -102,14 +94,6 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
             if (!ifPaused)
             {
                 phasePush();
-            }
-            else
-            {
-                if (ifDoingSelection)
-                {
-                    ifPaused = false;
-                    ifDoingSelection = false;
-                }
             }
         }
         else
@@ -121,34 +105,42 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
 
     public void askCounter()//询问对应
     {
-        CounterAskDialog.SetActive(true);
         BattleManager_Single.Instance.ChangeController();
+        AskingDialog_Title.text = "请选择对应卡片";
+        AskingDialog.SetActive(true);
     }
 
-    public void OnButtonClickNoCounter()//按钮：取消对应
+    public void askCounter_NoCounter(object sender, EventArgs e)//按钮：取消对应
     {
-        CounterAskDialog.SetActive(false);
-        BattleManager_Single.Instance.ChangeController();
-        ifNoCounter();
+        if (processPhase == SolvingProcess.activationDeclare && !ifDoingSelection)
+        {
+            BattleManager_Single.Instance.ChangeController();
+            AskingDialog.SetActive(false);
+            ifNoCounter();
+        }
     }
 
     public void counter(GameObject cardPrefab)//对应发动时
     {
-        CounterAskDialog.SetActive(false);
-        BattleManager_Single.Instance.ChangeController();
+        AskingDialog.SetActive(false);
         processPhase = SolvingProcess.counterDeclare;
         //储存对应卡牌
         Card card = cardPrefab.GetComponent<CardDisplay>().card;
         int id = card.CardID;
         counterCard = card;
+        if (counterCard == null)
+        {
+            Debug.Log("空的");
+        }
         counterCardPrefab = cardPrefab;
+        BattleManager_Single.Instance.InfoDisplayer.GetComponent<InfoDisplay>().infoDisplay(card);
         Debug.Log("宣言对应");
         //卡牌使用计数增加
         card.useCount_turn++;
         card.useCount_duel++;
         //创建LuaEnv,执行对应时效果
         luaenv_Counter = new LuaEnv();
-        luaenv_Counter.AddLoader(CardLuaLoader1);
+        luaenv_Counter.AddLoader(CardLuaLoader);
         luaenv_Counter.DoString("require('Card_" + id.ToString() + "')");
         Action counterDeclare = luaenv_Counter.Global.Get<Action>("CounterDeclare");
         LuaFunction D_counterDeclare = luaenv_Counter.Global.Get<LuaFunction>("CounterDeclare");
@@ -156,14 +148,6 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         if (!ifPaused)
         {
             phasePush();
-        }
-        else
-        {
-            if (ifDoingSelection)
-            {
-                ifPaused = false;
-                ifDoingSelection = false;
-            }
         }
     }
 
@@ -178,18 +162,11 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         {
             phasePush();
         }
-        else
-        {
-            if (ifDoingSelection)
-            {
-                ifPaused = false;
-                ifDoingSelection = false;
-            }
-        }
     }
 
     public void ifCounter()//被对应时
     {
+        BattleManager_Single.Instance.ChangeController();
         processPhase = SolvingProcess.ifCountered;
         Debug.Log("处理若被对应");
         Action whileCountered = luaenv_Active.Global.Get<Action>("WhileCountered");
@@ -199,18 +176,11 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         {
             phasePush();
         }
-        else
-        {
-            if (ifDoingSelection)
-            {
-                ifPaused = false;
-                ifDoingSelection = false;
-            }
-        }
     }
 
     public void counterResolve()//处理对应效果，若被延迟则进入发动卡牌的效果处理
     {
+        BattleManager_Single.Instance.ChangeController();
         processPhase = SolvingProcess.counterResolve;
         if (!ifCounterDelayed)
         {
@@ -218,75 +188,71 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
             Action counterResolve = luaenv_Counter.Global.Get<Action>("Resolve");
             LuaFunction D_counterResolve = luaenv_Counter.Global.Get<LuaFunction>("Resolve");
             D_counterResolve.Call();
-            luaenv_Counter.Dispose(); 
         }
         if (!ifPaused)
         {
             phasePush();
-        }
-        else
-        {
-            if (ifDoingSelection)
-            {
-                ifPaused = false;
-                ifDoingSelection = false;
-            }
         }
     }
 
     public void activationResolve()//处理发动卡牌效果
     {
+        if (counterCard != null)
+        {
+            Debug.Log("拉回控制权");
+            BattleManager_Single.Instance.ChangeController();
+        }
         processPhase = SolvingProcess.activationResolve;
         Debug.Log("处理效果");
         Action activationResolve = luaenv_Active.Global.Get<Action>("Resolve");
         LuaFunction D_activationResolve = luaenv_Active.Global.Get<LuaFunction>("Resolve");
         D_activationResolve.Call();
-        luaenv_Active.Dispose();
         if (!ifPaused)
         {
             phasePush();
-        }
-        else
-        {
-            if (ifDoingSelection)
-            {
-                ifPaused = false;
-                ifDoingSelection = false;
-            }
         }
     }
 
     public void delayResolve()//延迟处理对应效果
     {
+        BattleManager_Single.Instance.ChangeController();
         processPhase = SolvingProcess.delayResolve;
         Action delayResolve = luaenv_Counter.Global.Get<Action>("Resolve");
         LuaFunction D_delayResolve = luaenv_Counter.Global.Get<LuaFunction>("Resolve");
         D_delayResolve.Call();
-        luaenv_Counter.Dispose();
         if (!ifPaused)
         {
+            BattleManager_Single.Instance.ChangeController();
             phasePush();
-        }
-        else
-        {
-            if (ifDoingSelection)
-            {
-                ifPaused = false;
-                ifDoingSelection = false;
-            }
         }
     }
 
     public void processEnd()
     {
+        luaenv_Active.Dispose();
+        if (counterCard != null)
+        {
+            luaenv_Counter.Dispose();
+        }
         processPhase = SolvingProcess.endProcess;
         if (BattleManager_Single.Instance.controller.fieldZone.cardCount() != 0)
         {
-            BattleManager_Single.Instance.controller.graveGet(BattleManager_Single.Instance.controller.fieldZoneTransform.transform.GetChild(0).gameObject);//发动者卡牌进墓
+            activingCard.holdingPlayer.graveGet(BattleManager_Single.Instance.controller.fieldZoneTransform.transform.GetChild(0).gameObject);//发动者卡牌进墓
         }
         if (BattleManager_Single.Instance.controller.opponent.fieldZone.cardCount() != 0)
         {
-            BattleManager_Single.Instance.controller.opponent.graveGet(BattleManager_Single.Instance.controller.opponent.fieldZoneTransform.transform.GetChild(0).gameObject);//对应者卡牌进墓
+            counterCard.holdingPlayer.graveGet(BattleManager_Single.Instance.controller.opponent.fieldZoneTransform.transform.GetChild(0).gameObject);//对应者卡牌进墓
+        }
+        foreach (var buff in BattleManager_Single.Instance.buffListInGame)
+        {
+            if (buff.buffLast.Contains(BuffLast.actionLast))
+            {
+                buff.CountdownDecrease(BuffLast.actionLast);
+            }
+            if (buff.buffLast.Contains(BuffLast.cardLast))
+            {
+                buff.CountdownDecrease(BuffLast.cardLast);
+            }
         }
         ifNegated_Activer = false;
         ifNegated_Counter = false;
@@ -301,20 +267,49 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
 
     public void selectSolve()
     {
-        Action activationDeclare = luaenv_Active.Global.Get<Action>("AfterSelection");
-        LuaFunction D_activationDeclare = luaenv_Active.Global.Get<LuaFunction>("AfterSelection");
-        D_activationDeclare.Call();
-        if (!ifPaused)
+        string phase = null;
+        switch (processPhase)
         {
-            phasePush();
+            case SolvingProcess.beforeActivation:
+                Debug.Log("在处理阶段外");
+                break;
+            case SolvingProcess.activationDeclare:
+                phase = "ActivationDeclare";
+                break;
+            case SolvingProcess.counterDeclare:
+                phase = "CounterDeclare";
+                break;
+            case SolvingProcess.ifNotCountered:
+                phase = "WhileNotCountered";
+                break;
+            case SolvingProcess.ifCountered:
+                phase = "WhileCountered";
+                break;
+            case SolvingProcess.endProcess:
+                phase = "AfterResolve";
+                Debug.Log("处理结束");
+                break;
+            default:
+                phase = "Resolve";
+                break;
+        }
+        EffectTransformer.Instance.ifPaused = false;
+        if (processPhase == SolvingProcess.counterDeclare || processPhase == SolvingProcess.counterResolve || processPhase == SolvingProcess.delayResolve)
+        {
+            Action afterSelection = luaenv_Counter.Global.Get<Action>("AfterSelection_" + phase);
+            LuaFunction D_afterSelection = luaenv_Counter.Global.Get<LuaFunction>("AfterSelection_" + phase);
+            D_afterSelection.Call();
         }
         else
         {
-            if (ifDoingSelection)
-            {
-                ifPaused = false;
-                ifDoingSelection = false;
-            }
+            Action afterSelection = luaenv_Active.Global.Get<Action>("AfterSelection_" + phase);
+            LuaFunction D_afterSelection = luaenv_Active.Global.Get<LuaFunction>("AfterSelection_" + phase);
+            D_afterSelection.Call();
+        }
+        if (!ifPaused)
+        {
+            EffectTransformer.Instance.ifDoingSelection = false;
+            phasePush();
         }
     }
 
@@ -359,6 +354,24 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
                 processEnd();
                 break;
         }
+    }
+
+    public Player getUserByPhase()
+    {
+        Player result = EffectTransformer.Instance.activingCard.holdingPlayer;
+        switch (EffectTransformer.Instance.processPhase)
+        {
+            case SolvingProcess.counterDeclare:
+                result = result.opponent;
+                break;
+            case SolvingProcess.counterResolve:
+                result = result.opponent;
+                break;
+            case SolvingProcess.delayResolve:
+                result = result.opponent;
+                break;
+        }
+        return result;
     }
 
     #endregion 

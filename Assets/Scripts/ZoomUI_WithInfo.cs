@@ -22,7 +22,7 @@ public class ZoomUI_WithInfo : MonoBehaviour, IPointerEnterHandler, IPointerExit
     public void OnPointerEnter(PointerEventData pointerEventData)
     {
         transform.localScale = new Vector3(zoomSize, zoomSize, 1.0f);
-        BattleManager_Single.Instance.infoDisplay(gameObject.GetComponent<CardDisplay>().card);
+        BattleManager_Single.Instance.InfoDisplayer.GetComponent<InfoDisplay>().infoDisplay(gameObject.GetComponent<CardDisplay>().card);
     }
 
     public void OnPointerExit(PointerEventData pointerEventData)

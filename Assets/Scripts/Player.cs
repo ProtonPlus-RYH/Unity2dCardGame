@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-using XLua;
-using System.IO;
-using System;
 
 public class Player : MonoBehaviour
 {
@@ -17,6 +14,7 @@ public class Player : MonoBehaviour
     public int SP;
     public int MP;
     public List<Card> holdingCards;
+    public List<Buff> buffList;
     public bool ifGoingFirst;
 
     public TextMeshProUGUI LifePointTMP;
@@ -47,6 +45,7 @@ public class Player : MonoBehaviour
     {
         library.getAllCards();
         holdingCards = new List<Card>();
+        buffList = new List<Buff>();
     }
 
 
@@ -61,29 +60,6 @@ public class Player : MonoBehaviour
         LifePointTMP.text = maxLP.ToString();
         StaminaPointTMP.text = maxSP.ToString();
         ManaPointTMP.text = maxMP.ToString();
-    }
-
-
-    public void moveToDeckChange(GameObject card)//卡牌进入卡组时翻面
-    {
-        card.transform.Find("Informations").gameObject.SetActive(false);
-        card.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 180f, 0f); //旋转使之面朝下
-    }
-
-    public void moveOutFromDeckChange(GameObject card)//卡牌退出卡组时翻面
-    {
-        card.transform.Find("Informations").gameObject.SetActive(true);
-        card.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 0f, 0f);
-    }
-
-    public GameObject cardGenerate(int id, Transform parent)//生成单卡
-    {
-        GameObject newCard = Instantiate(CardPrefab, parent);
-        newCard.GetComponent<CardDisplay>().card = library.copyCard(library.cardPool[id]);
-        newCard.GetComponent<CardDisplay>().card.HoldingPlayer = this;
-        newCard.GetComponent<CardDisplay>().card.holdingPlayer = this;
-        holdingCards.Add(newCard.GetComponent<CardDisplay>().card);
-        return newCard;
     }
 
     public void handSpaceFix()//间距调整
@@ -104,21 +80,54 @@ public class Player : MonoBehaviour
         }
     }
 
+    #region Card Basic Treatments
+
+    public void moveToDeckChange(GameObject card)//卡牌进入卡组时翻面
+    {
+        card.transform.Find("Informations").gameObject.SetActive(false);
+        card.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 180f, 0f); //旋转使之面朝下
+    }
+
+    public void moveOutFromDeckChange(GameObject card)//卡牌退出卡组时翻面
+    {
+        card.transform.Find("Informations").gameObject.SetActive(true);
+        card.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 0f, 0f);
+    }
+
+    public GameObject cardGenerate(int id, Transform parent)//生成单卡
+    {
+        GameObject newCard = Instantiate(CardPrefab, parent);
+        newCard.GetComponent<CardDisplay>().card = library.copyCard(library.cardPool[id]);
+        newCard.GetComponent<CardDisplay>().card.HoldingPlayer = this;
+        newCard.GetComponent<CardDisplay>().card.holdingPlayer = this;
+        parent.GetComponent<Zone>().MoveInEffectCheck(newCard.GetComponent<CardDisplay>().card);
+        holdingCards.Add(newCard.GetComponent<CardDisplay>().card);
+        return newCard;
+    }
+
     public void handGet(GameObject card)//手牌从单卡原来所在区域获得单卡
     {
         Transform fromWhere = card.transform.parent;
-        card.transform.SetParent(handZoneTransform);
-        if(fromWhere != null)
+        card.transform.SetParent(null);
+        if (fromWhere != null)
         {
+            fromWhere.GetComponent<Zone>().MoveOutEffectCheck(card.GetComponent<CardDisplay>().card);
+            card.transform.SetParent(handZoneTransform);
+            handZone.MoveInEffectCheck(card.GetComponent<CardDisplay>().card);
             if(fromWhere == deckZoneTransform)
             {
                 moveOutFromDeckChange(card);
                 DeckCountTMP.text = deckZone.cardCount().ToString();
             }
-            else if(fromWhere == graveZoneTransform)
+            else if(fromWhere == graveZone)
             {
                 GraveCountTMP.text = graveZone.cardCount().ToString();
             }
+        }
+        else
+        {
+            card.transform.SetParent(handZoneTransform);
+            handZone.MoveInEffectCheck(card.GetComponent<CardDisplay>().card);
         }
         handSpaceFix();
     }
@@ -139,13 +148,15 @@ public class Player : MonoBehaviour
 
     public void deckGet(GameObject card, bool ifBottom)//卡组从单卡原来所在区域获得单卡
     {
-        moveToDeckChange(card);
         int id = card.GetComponent<CardDisplay>().card.CardID;
-
         Transform fromWhere = card.transform.parent;
-        card.transform.SetParent(deckZoneTransform);
-        if(fromWhere != null)
+        card.transform.SetParent(null);
+        if (fromWhere != null)
         {
+            fromWhere.GetComponent<Zone>().MoveOutEffectCheck(card.GetComponent<CardDisplay>().card);
+            card.transform.SetParent(deckZoneTransform);
+            moveToDeckChange(card);
+            deckZone.MoveInEffectCheck(card.GetComponent<CardDisplay>().card);
             if  (fromWhere == graveZoneTransform)
             {
                 GraveCountTMP.text = graveZone.cardCount().ToString();
@@ -155,7 +166,13 @@ public class Player : MonoBehaviour
                 handSpaceFix();
             }
         }
-        if (!ifBottom)
+        else
+        {
+            card.transform.SetParent(deckZoneTransform);
+            moveToDeckChange(card);
+            deckZone.MoveInEffectCheck(card.GetComponent<CardDisplay>().card);
+        }
+        if (ifBottom)//0是卡组底
         {
             card.transform.SetSiblingIndex(0);
         }
@@ -180,9 +197,12 @@ public class Player : MonoBehaviour
     public void graveGet(GameObject card)//墓地从单卡原来所在区域获得单卡
     {
         Transform fromWhere = card.transform.parent;
-        card.transform.SetParent(graveZoneTransform);
-        if(fromWhere != null)
+        card.transform.SetParent(null);
+        if (fromWhere != null)
         {
+            fromWhere.GetComponent<Zone>().MoveOutEffectCheck(card.GetComponent<CardDisplay>().card);
+            card.transform.SetParent(graveZoneTransform);
+            graveZone.MoveInEffectCheck(card.GetComponent<CardDisplay>().card);
             if (fromWhere == deckZoneTransform)
             {
                 moveOutFromDeckChange(card);
@@ -192,6 +212,11 @@ public class Player : MonoBehaviour
             {
                 handSpaceFix();
             }
+        }
+        else
+        {
+            card.transform.SetParent(graveZoneTransform);
+            graveZone.MoveInEffectCheck(card.GetComponent<CardDisplay>().card);
         }
         GraveCountTMP.text = graveZone.cardCount().ToString();
     }
@@ -214,9 +239,11 @@ public class Player : MonoBehaviour
     public void fieldGet(GameObject card)//墓地从单卡原来所在区域获得单卡
     {
         Transform fromWhere = card.transform.parent;
-        card.transform.SetParent(fieldZoneTransform);
         if (fromWhere != null)
         {
+            fromWhere.GetComponent<Zone>().MoveOutEffectCheck(card.GetComponent<CardDisplay>().card);
+            card.transform.SetParent(fieldZoneTransform);
+            fieldZone.MoveInEffectCheck(card.GetComponent<CardDisplay>().card);
             if (fromWhere == deckZoneTransform)
             {
                 moveOutFromDeckChange(card);
@@ -230,6 +257,11 @@ public class Player : MonoBehaviour
             {
                 handSpaceFix();
             }
+        }
+        else
+        {
+            card.transform.SetParent(fieldZoneTransform);
+            fieldZone.MoveInEffectCheck(card.GetComponent<CardDisplay>().card);
         }
     }
 
@@ -272,37 +304,91 @@ public class Player : MonoBehaviour
         }
     }
 
-    /*public int invokeCount;
-
-    public void drawMultipleCard(int num)
+    public float invokeCount_draw;
+    public void drawMultipleCards(int num)
     {
-        if (num > deckZoneTransform.childCount)
+        invokeCount_draw = num;
+        InvokeRepeating("drawSingleCard", 0f, 0.3f);
+    }
+    public void drawSingleCard()
+    {
+        drawCardAnimation();
+        Invoke("drawSingleCard_InvokedMethod", 0.25f);
+    }
+    public void drawSingleCard_InvokedMethod()
+    {
+        handGet(deckZoneTransform.GetChild(deckZoneTransform.childCount-1).gameObject);
+        invokeCount_draw--;
+        if (invokeCount_draw == 0)
         {
-            num = deckZoneTransform.childCount;
+            CancelInvoke("drawSingleCard");
         }
-        invokeCount = num;
-        InvokeRepeating("DrawCard", 0f, 0.8f);
     }
 
-    public void DrawCard()
+    #endregion
+
+    #region animations
+
+    public void drawCardAnimation()
     {
-        GameObject card = deckZoneTransform.GetChild(0).gameObject;
-        Vector3 drawShowingPosition = new Vector3(0f, 600f, 0f);
-        Vector3 drawShowingRotation = new Vector3(180f, 0f, -90f);
-        LeanTween.moveLocal(card, drawShowingPosition, 0.3f);
-        LeanTween.rotateLocal(card, drawShowingRotation, 0.3f);
-        Invoke("dr", 0.4f);
+        LeanTween.moveLocal(deckZoneTransform.GetChild(deckZoneTransform.childCount-1).gameObject, new Vector3(0f, 500f, 0f), 0.2f);
     }
 
-    public void dr()
+
+    #endregion
+
+    #region about buffs
+
+    public void Buff_BuffEnds(object sender, Buff.BuffEventArgs e)
     {
-        invokeCount--;
-        if(invokeCount == 0)
+        RemoveBuff(e.buff);
+    }
+
+    public void AddBuff(Buff buff)
+    {
+        buffList.Add(buff);
+        buff.BuffEnd += Buff_BuffEnds;
+        BuffStartEffect(buff);
+    }
+
+    public void RemoveBuff(Buff buff)
+    {
+        BuffEndEffect(buff);
+        buff.BuffEnd -= Buff_BuffEnds;
+        buffList.Remove(buff);
+    }
+    public void BuffStartEffect(Buff buff)
+    {
+        switch (buff.effectTarget)
         {
-            CancelInvoke("DrawCard");
+            case EffectTarget.handZone:
+                handZone.AddBuff(buff);
+                break;
+            case EffectTarget.holdingCard:
+                handZone.AddBuff(buff);
+                deckZone.AddBuff(buff);
+                graveZone.AddBuff(buff);
+                fieldZone.AddBuff(buff);
+                break;
         }
-        GameObject card = deckZoneTransform.GetChild(0).gameObject;
-        handGet(card);
-    }*/
+    }
+
+    public void BuffEndEffect(Buff buff)
+    {
+        switch (buff.effectTarget)
+        {
+            case EffectTarget.handZone:
+                handZone.RemoveBuff(buff);
+                break;
+            case EffectTarget.holdingCard:
+                handZone.RemoveBuff(buff);
+                deckZone.RemoveBuff(buff);
+                graveZone.RemoveBuff(buff);
+                fieldZone.RemoveBuff(buff);
+                break;
+        }
+    }
+
+    #endregion
 
 }

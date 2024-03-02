@@ -16,31 +16,41 @@ public class CardDisplay : MonoBehaviour
     public TextMeshProUGUI distanceText;
     public TextMeshProUGUI distanceTitleText;
 
+    public GameObject quickMark;
+
     public Card card;
 
     // Start is called before the first frame update
     void Start()
     {
-        ShowCard();
+        
     }
 
     // Update is called once per frame
     void Update()
     {
-        
+        ShowCard();
+        if (card.ifQuick_current)
+        {
+            quickMark.SetActive(true);
+        }
+        else
+        {
+            quickMark.SetActive(false);
+        }
     }
 
     public void ShowCard()
     {
         cardNameText.text = card.CardName;
         discriptionText.text = card.Discription;
-        staminaCostText.text = card.StaminaCost.ToString();
-        manaCostText.text = card.ManaCost.ToString();
+        staminaCostText.text = card.staminaCost_current.ToString();
+        manaCostText.text = card.manaCost_current.ToString();
         if (card.GetType() == typeof(AttackCard))
         {
             var attackCard = card as AttackCard;
-            attackPowerText.text = attackCard.AttackPower.ToString();
-            distanceText.text = attackCard.Distance.ToString();
+            attackPowerText.text = attackCard.attackPower_current.ToString();
+            distanceText.text = attackCard.distance_current.ToString();
         }
         else
         {

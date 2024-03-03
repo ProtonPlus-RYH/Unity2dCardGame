@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public enum EffectTarget
@@ -10,17 +11,17 @@ public enum EffectTarget
 
 public enum JudgeType
 {
-    valueGreaterThan, valueLessThan, valueEqualTo, valueNotEqualTo, cardTypeIs, cardTypeIsNot
+    valueGreaterThan, valueLessThan, valueEqualTo, valueNotEqualTo, cardTypeIs
 }
 
 public enum EffectType
 {
-    nullEffect, numChange, atkChange, ifQuickChange, ifActivableChange, ifNegatedChange, useCountINTurnChange, useCountInDuelChange, limitAdd, delayEffect
+    nullEffect, numChange, atkChange, ifQuickChange, ifActivableChange, ifNegatedChange, useCountINTurnChange, useCountInDuelChange, banCard, moveBeforeAttack, damageTargetChange
 }
 
 public enum BuffLast
 {
-    turnLast, turnLast_opponent, actionLast, cardLast, eternal
+    turnLast, turnLast_opponent, actionLast, attackLast_Self, cardLast, eternal
 }
 
 public enum SelectionType
@@ -33,7 +34,7 @@ public enum SolveTarget
     self, opponent, both
 }
 
-public class EffectList// : MonoBehaviour
+public class EffectList //: MonoSingleton<EffectList>
 {
     public SolveTarget getOpponent(SolveTarget input)
     {
@@ -60,8 +61,8 @@ public class EffectList// : MonoBehaviour
             switch (selectionType)
             {
                 case SelectionType.selectMovementWithCancel:
-                    EffectTransformer.Instance.AskingDialog_Title.text = "请选择前进或者后退";
-                    EffectTransformer.Instance.AskingDialog.SetActive(true);
+                    BattleManager_Single.Instance.AskingDialog_Title.text = "请选择前进或者后退";
+                    BattleManager_Single.Instance.AskingDialog.SetActive(true);
                     BattleManager_Single.Instance.MoveForwardClick += MoveForwardWithSelection;
                     BattleManager_Single.Instance.MoveBackClick += MoveBackWithSelection;
                     BattleManager_Single.Instance.CancelClick += SelectionEnd_Event;
@@ -136,7 +137,7 @@ public class EffectList// : MonoBehaviour
                 {
                     player.opponent.AddBuff(buff);
                 }
-                    BattleManager_Single.Instance.buffListInGame.Add(buff);
+                BattleManager_Single.Instance.buffListInGame.Add(buff);
             }
             else
             {
@@ -188,6 +189,7 @@ public class EffectList// : MonoBehaviour
             int distance = attackCard.distance_current;
             if (!playerCard.ifNegated)
             {
+                BattleManager_Single.Instance.AttackDeclare(player);
                 //距离计算
                 if (distance >= BattleManager_Single.Instance.distanceInGame)
                 {
@@ -215,6 +217,14 @@ public class EffectList// : MonoBehaviour
             Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
             if (!playerCard.ifNegated)
             {
+                if (attacker == SolveTarget.self)
+                {
+                    BattleManager_Single.Instance.AttackDeclare(player);
+                }
+                else
+                {
+                    BattleManager_Single.Instance.AttackDeclare(player.opponent);
+                }
                 //距离计算
                 if (distance <= BattleManager_Single.Instance.distanceInGame)
                 {
@@ -244,11 +254,26 @@ public class EffectList// : MonoBehaviour
             {
                 if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
                 {
-                    BattleManager_Single.Instance.ChangeLP(player, num * (-1));
+                    if (player.damageTarget == EffectTarget.LP)
+                    {
+                        BattleManager_Single.Instance.ChangeLP(player, num * (-1));
+                        player.DamageAppear(num);
+                    }else if (player.damageTarget == EffectTarget.SP)
+                    {
+                        BattleManager_Single.Instance.ChangeSP(player, num * (-1));
+                    }
                 }
                 if (solveTarget == SolveTarget.opponent || solveTarget == SolveTarget.both)
                 {
-                    BattleManager_Single.Instance.ChangeLP(player.opponent, num * (-1));
+                    if (player.opponent.damageTarget == EffectTarget.LP)
+                    {
+                        BattleManager_Single.Instance.ChangeLP(player.opponent, num * (-1));
+                        player.opponent.DamageAppear(num);
+                    }
+                    else if (player.opponent.damageTarget == EffectTarget.SP)
+                    {
+                        BattleManager_Single.Instance.ChangeSP(player.opponent, num * (-1));
+                    }
                 }
             }
             else
@@ -503,7 +528,7 @@ public class EffectList// : MonoBehaviour
         switch (selectingType)
         {
             case SelectionType.selectMovementWithCancel:
-                EffectTransformer.Instance.AskingDialog.SetActive(false);
+                BattleManager_Single.Instance.AskingDialog.SetActive(false);
                 BattleManager_Single.Instance.MoveForwardClick -= MoveForwardWithSelection;
                 BattleManager_Single.Instance.MoveBackClick -= MoveBackWithSelection;
                 BattleManager_Single.Instance.CancelClick -= SelectionEnd_Event;
@@ -529,6 +554,15 @@ public class EffectList// : MonoBehaviour
         {
             SelectionEnd();
         }
+    }
+
+    #endregion
+
+    #region Trigger Effects
+
+    public void Move_Trigger(object sender, EventArgs e)
+    {
+
     }
 
     #endregion

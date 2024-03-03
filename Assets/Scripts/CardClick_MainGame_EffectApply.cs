@@ -45,6 +45,12 @@ public class CardClick_MainGame_EffectApply : MonoBehaviour, IPointerDownHandler
             card.useCount_turn++;
             card.useCount_duel++;
         }
+        else if (cardUser == BattleManager_Single.Instance.self && BattleManager_Single.Instance.gamePhase == GamePhase.EndPhase || cardUser == BattleManager_Single.Instance.opponent && BattleManager_Single.Instance.gamePhase == GamePhase.OpponentEndPhase)
+        //Ô¤Âñ½×¶Î
+        {
+            BattleManager_Single.Instance.CardSet(gameObject);
+            BattleManager_Single.Instance.HandCountCheck();
+        }
         else if (cardUser == BattleManager_Single.Instance.self && BattleManager_Single.Instance.gamePhase == GamePhase.selfHandDiscarding || cardUser == BattleManager_Single.Instance.opponent && BattleManager_Single.Instance.gamePhase == GamePhase.opponentHandDiscarding)
         //ÆúÅÆ½×¶Î
         {

@@ -8,6 +8,7 @@ public class Buff
 {
     public int turnLast;
     public int actionLast;
+    public int attackLast;
     public int cardLast;
 
     public SolveTarget solveTarget;
@@ -38,11 +39,11 @@ public class Buff
                     bool b = EffectTransformer.Instance.getUserByPhase().ifGoingFirst;//被施加buff的是不是先手
                     if(a==b)
                     {
-                        turnLast = lastReference[i] * 2 - 1;
+                        turnLast = lastReference[i] * 2;
                     }
                     else
                     {
-                        turnLast = lastReference[i] * 2 - 2;
+                        turnLast = lastReference[i] * 2 - 1;
                     }
                     break;
                 case BuffLast.actionLast:
@@ -61,7 +62,7 @@ public class Buff
         {
             case BuffLast.turnLast:
                 turnLast--;
-                if(turnLast < 0)
+                if(turnLast <= 0)
                 {
                     BuffEnd?.Invoke(this,new BuffEventArgs(this));
                 }

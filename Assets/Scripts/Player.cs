@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System;
 
 public class Player : MonoBehaviour
 {
@@ -23,6 +24,9 @@ public class Player : MonoBehaviour
     public RectTransform LifeMask;
     public RectTransform StaminaMask;
     public RectTransform ManaMask;
+
+    public GameObject DamageObj;
+    public TextMeshProUGUI DamageNumTMP;
 
     public TextMeshProUGUI DeckCountTMP;
     public TextMeshProUGUI GraveCountTMP;
@@ -46,6 +50,8 @@ public class Player : MonoBehaviour
         library.getAllCards();
         holdingCards = new List<Card>();
         buffList = new List<Buff>();
+        damageTarget = EffectTarget.LP;
+        damageTargetRecord = new List<EffectTarget>{damageTarget};
     }
 
 
@@ -334,6 +340,17 @@ public class Player : MonoBehaviour
         LeanTween.moveLocal(deckZoneTransform.GetChild(deckZoneTransform.childCount-1).gameObject, new Vector3(0f, 500f, 0f), 0.2f);
     }
 
+    public void DamageAppear(int num)
+    {
+        DamageNumTMP.text = num.ToString();
+        DamageObj.SetActive(true);
+        Invoke("DamageDisappear", 1.0f);
+    }
+
+    public void DamageDisappear()
+    {
+        DamageObj.SetActive(false);
+    }
 
     #endregion
 
@@ -357,10 +374,30 @@ public class Player : MonoBehaviour
         buff.BuffEnd -= Buff_BuffEnds;
         buffList.Remove(buff);
     }
+
     public void BuffStartEffect(Buff buff)
     {
         switch (buff.effectTarget)
         {
+            case EffectTarget.duelist:
+                switch (buff.effectType)
+                {
+                    case EffectType.moveBeforeAttack:
+                        BattleManager_Single.Instance.BeforeAttack += Move_Trigger;
+                        moveBeforeAttackNumRecord = buff.effectReference;
+                        break;
+                    case EffectType.damageTargetChange:
+                        switch (buff.effectReference)//0：LP;1：SP;2：MP
+                        {
+                            case 1:
+                                damageTarget = EffectTarget.SP;
+                                damageTargetRecord.Add(EffectTarget.SP);
+                                damageTargetOrderRecord.Add(buffList.Count - 1);//第几条记录就是第几次修改
+                                break;
+                        }
+                        break;
+                }
+                break;
             case EffectTarget.handZone:
                 handZone.AddBuff(buff);
                 break;
@@ -377,6 +414,19 @@ public class Player : MonoBehaviour
     {
         switch (buff.effectTarget)
         {
+            case EffectTarget.duelist:
+                switch (buff.effectType)
+                {
+                    case EffectType.moveBeforeAttack:
+                        BattleManager_Single.Instance.BeforeAttack -= Move_Trigger;
+                        break;
+                    case EffectType.damageTargetChange:
+                        damageTarget = damageTargetRecord[damageTargetOrderRecord.IndexOf(buffList.IndexOf(buff))];
+                        damageTargetRecord.RemoveAt(damageTargetOrderRecord.IndexOf(buffList.IndexOf(buff)));
+                        damageTargetOrderRecord.Remove(buffList.IndexOf(buff));
+                        break;
+                }
+                break;
             case EffectTarget.handZone:
                 handZone.RemoveBuff(buff);
                 break;
@@ -386,6 +436,23 @@ public class Player : MonoBehaviour
                 graveZone.RemoveBuff(buff);
                 fieldZone.RemoveBuff(buff);
                 break;
+        }
+    }
+
+    #endregion
+
+
+    #region Trigger Effects
+
+    public int moveBeforeAttackNumRecord;
+    public EffectTarget damageTarget;
+    public List<EffectTarget> damageTargetRecord;
+    public List<int> damageTargetOrderRecord;
+    public void Move_Trigger(object sender, BattleManager_Single.AttackEventArgs e)
+    {
+        if (e.attacker == this)
+        {
+            BattleManager_Single.Instance.ChangeDistance(moveBeforeAttackNumRecord);
         }
     }
 

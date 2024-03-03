@@ -14,8 +14,6 @@ public enum SolvingProcess
 
 public class EffectTransformer : MonoSingleton<EffectTransformer>
 {
-    public GameObject AskingDialog;
-    public TextMeshProUGUI AskingDialog_Title;
     public TextMeshProUGUI AskingDialog_ButtonText;
     
     public Card activingCard;
@@ -38,6 +36,10 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
     public int selectCount;
     public bool judgeResult;
 
+    public bool ifReturnedToSomewhere_active;
+    public bool ifReturnedToSomewhere_counter;
+
+
     void Start()
     {
         ifNegated_Activer = false;
@@ -47,6 +49,8 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         ifPaused = false;
         ifDoingSelection = false;
         judgeResult = false;
+        ifReturnedToSomewhere_active = false;
+        ifReturnedToSomewhere_counter = false;
         BattleManager_Single.Instance.CancelClick += askCounter_NoCounter;
     }
 
@@ -77,7 +81,7 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         activingCard = card;
         activingCardPrefab = cardPrefab;
         BattleManager_Single.Instance.InfoDisplayer.GetComponent<InfoDisplay>().infoDisplay(card);
-        Debug.Log("宣言发动");
+        //Debug.Log("宣言发动");
         //卡牌使用计数增加
         card.useCount_turn++;
         card.useCount_duel++;
@@ -89,40 +93,46 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         LuaFunction D_activationDeclare = luaenv_Active.Global.Get<LuaFunction>("ActivationDeclare");
         D_activationDeclare.Call();
         //阶段推进
-        if (BattleManager_Single.Instance.controller.opponent.fieldZone.cardCount() == 0)//判断有无预埋
+        BattleManager_Single.Instance.ChangeController();
+        if (BattleManager_Single.Instance.controller.fieldZone.cardCount() == 0)//判断有无预埋
         {
             if (!ifPaused)
             {
-                phasePush();
+                EffectSolvingPhasePush();
             }
         }
         else
         {
-            GameObject preSetCard = BattleManager_Single.Instance.controller.opponent.fieldZoneTransform.GetChild(0).gameObject;
-            counter(preSetCard);
+            preSetCard = BattleManager_Single.Instance.controller.fieldZoneTransform.GetChild(0).gameObject;
+            LeanTween.rotateLocal(preSetCard, new Vector3(0f, 0f, 0f), 0.2f);
+            Invoke("PreSet_Invoke", 0.3f);
         }
+    }
+
+    public GameObject preSetCard;
+    public void PreSet_Invoke()
+    {
+        counter(preSetCard);
     }
 
     public void askCounter()//询问对应
     {
-        BattleManager_Single.Instance.ChangeController();
-        AskingDialog_Title.text = "请选择对应卡片";
-        AskingDialog.SetActive(true);
+        BattleManager_Single.Instance.AskingDialog_Title.text = "请选择对应卡片";
+        BattleManager_Single.Instance.AskingDialog.SetActive(true);
     }
 
     public void askCounter_NoCounter(object sender, EventArgs e)//按钮：取消对应
     {
         if (processPhase == SolvingProcess.activationDeclare && !ifDoingSelection)
         {
-            BattleManager_Single.Instance.ChangeController();
-            AskingDialog.SetActive(false);
+            BattleManager_Single.Instance.AskingDialog.SetActive(false);
             ifNoCounter();
         }
     }
 
     public void counter(GameObject cardPrefab)//对应发动时
     {
-        AskingDialog.SetActive(false);
+        BattleManager_Single.Instance.AskingDialog.SetActive(false);
         processPhase = SolvingProcess.counterDeclare;
         //储存对应卡牌
         Card card = cardPrefab.GetComponent<CardDisplay>().card;
@@ -134,7 +144,7 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         }
         counterCardPrefab = cardPrefab;
         BattleManager_Single.Instance.InfoDisplayer.GetComponent<InfoDisplay>().infoDisplay(card);
-        Debug.Log("宣言对应");
+        //Debug.Log("宣言对应");
         //卡牌使用计数增加
         card.useCount_turn++;
         card.useCount_duel++;
@@ -147,103 +157,95 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         D_counterDeclare.Call();
         if (!ifPaused)
         {
-            phasePush();
+            EffectSolvingPhasePush();
         }
     }
 
     public void ifNoCounter()//未被对应时
     {
         processPhase = SolvingProcess.ifNotCountered;
-        Debug.Log("处理若未被对应"); 
+        //Debug.Log("处理若未被对应"); 
         Action whileNotCountered = luaenv_Active.Global.Get<Action>("WhileNotCountered");
         LuaFunction D_whileNotCountered = luaenv_Active.Global.Get<LuaFunction>("WhileNotCountered");
         D_whileNotCountered.Call();
         if (!ifPaused)
         {
-            phasePush();
+            EffectSolvingPhasePush();
         }
     }
 
     public void ifCounter()//被对应时
     {
-        BattleManager_Single.Instance.ChangeController();
         processPhase = SolvingProcess.ifCountered;
-        Debug.Log("处理若被对应");
+        //Debug.Log("处理若被对应");
         Action whileCountered = luaenv_Active.Global.Get<Action>("WhileCountered");
         LuaFunction D_whileCountered = luaenv_Active.Global.Get<LuaFunction>("WhileCountered");
         D_whileCountered.Call();
         if (!ifPaused)
         {
-            phasePush();
+            EffectSolvingPhasePush();
         }
     }
 
     public void counterResolve()//处理对应效果，若被延迟则进入发动卡牌的效果处理
     {
-        BattleManager_Single.Instance.ChangeController();
         processPhase = SolvingProcess.counterResolve;
         if (!ifCounterDelayed)
         {
-            Debug.Log("处理对应");
+            //Debug.Log("处理对应");
             Action counterResolve = luaenv_Counter.Global.Get<Action>("Resolve");
             LuaFunction D_counterResolve = luaenv_Counter.Global.Get<LuaFunction>("Resolve");
             D_counterResolve.Call();
         }
         if (!ifPaused)
         {
-            phasePush();
+            EffectSolvingPhasePush();
         }
     }
 
     public void activationResolve()//处理发动卡牌效果
     {
-        if (counterCard != null)
-        {
-            Debug.Log("拉回控制权");
-            BattleManager_Single.Instance.ChangeController();
-        }
+        
         processPhase = SolvingProcess.activationResolve;
-        Debug.Log("处理效果");
+        //Debug.Log("处理效果");
         Action activationResolve = luaenv_Active.Global.Get<Action>("Resolve");
         LuaFunction D_activationResolve = luaenv_Active.Global.Get<LuaFunction>("Resolve");
         D_activationResolve.Call();
         if (!ifPaused)
         {
-            phasePush();
+            EffectSolvingPhasePush();
         }
     }
 
     public void delayResolve()//延迟处理对应效果
     {
-        BattleManager_Single.Instance.ChangeController();
         processPhase = SolvingProcess.delayResolve;
         Action delayResolve = luaenv_Counter.Global.Get<Action>("Resolve");
         LuaFunction D_delayResolve = luaenv_Counter.Global.Get<LuaFunction>("Resolve");
         D_delayResolve.Call();
         if (!ifPaused)
         {
-            BattleManager_Single.Instance.ChangeController();
-            phasePush();
+            EffectSolvingPhasePush();
         }
     }
 
     public void processEnd()
     {
+        processPhase = SolvingProcess.endProcess;
         luaenv_Active.Dispose();
         if (counterCard != null)
         {
             luaenv_Counter.Dispose();
         }
-        processPhase = SolvingProcess.endProcess;
-        if (BattleManager_Single.Instance.controller.fieldZone.cardCount() != 0)
+        if (activingCard != null)
         {
-            activingCard.holdingPlayer.graveGet(BattleManager_Single.Instance.controller.fieldZoneTransform.transform.GetChild(0).gameObject);//发动者卡牌进墓
+            activingCard.holdingPlayer.graveGet(activingCard.holdingPlayer.fieldZoneTransform.transform.GetChild(0).gameObject);//发动者卡牌进墓
         }
-        if (BattleManager_Single.Instance.controller.opponent.fieldZone.cardCount() != 0)
+        if (counterCard != null)
         {
-            counterCard.holdingPlayer.graveGet(BattleManager_Single.Instance.controller.opponent.fieldZoneTransform.transform.GetChild(0).gameObject);//对应者卡牌进墓
+            counterCard.holdingPlayer.graveGet(counterCard.holdingPlayer.fieldZoneTransform.transform.GetChild(0).gameObject);//对应者卡牌进墓
         }
-        foreach (var buff in BattleManager_Single.Instance.buffListInGame)
+        foreach (var buff in BattleManager_Single.Instance.buffListInGame)//行动计数，卡牌计数buff倒数减少
         {
             if (buff.buffLast.Contains(BuffLast.actionLast))
             {
@@ -260,9 +262,19 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         ifCanBeCountered = true;
         ifPaused = false;
         ifDoingSelection = false;
+        ifReturnedToSomewhere_active = false;
+        ifReturnedToSomewhere_counter = false;
         activingCard = null;
         counterCard = null;
         processPhase = SolvingProcess.beforeActivation;
+        if (BattleManager_Single.Instance.gamePhase == GamePhase.EndPhase)
+        {
+            BattleManager_Single.Instance.endPhase();
+        }
+        else if (BattleManager_Single.Instance.gamePhase == GamePhase.OpponentEndPhase)
+        {
+            BattleManager_Single.Instance.opponentEndPhase();
+        }
     }
 
     public void selectSolve()
@@ -293,7 +305,7 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
                 phase = "Resolve";
                 break;
         }
-        EffectTransformer.Instance.ifPaused = false;
+        ifPaused = false;
         if (processPhase == SolvingProcess.counterDeclare || processPhase == SolvingProcess.counterResolve || processPhase == SolvingProcess.delayResolve)
         {
             Action afterSelection = luaenv_Counter.Global.Get<Action>("AfterSelection_" + phase);
@@ -308,53 +320,61 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         }
         if (!ifPaused)
         {
-            EffectTransformer.Instance.ifDoingSelection = false;
-            phasePush();
+            ifDoingSelection = false;
+            EffectSolvingPhasePush();
         }
     }
 
 
-    public void phasePush()
+    public void EffectSolvingPhasePush()
     {
         switch (processPhase)
         {
             case SolvingProcess.activationDeclare:
                 if (ifCanBeCountered)
                 {
-                    askCounter();
+                    Invoke("askCounter", 0.5f);
                 }
                 else
                 {
-                    activationResolve();
+                    Invoke("ifNoCounter", 0.5f);
                 }
                 break;
             case SolvingProcess.counterDeclare:
-                ifCounter();
+                BattleManager_Single.Instance.ChangeController();
+                Invoke("ifCounter", 0.5f);
                 break;
             case SolvingProcess.ifNotCountered:
-                activationResolve();
+                BattleManager_Single.Instance.ChangeController();
+                Invoke("activationResolve", 0.5f);
                 break;
             case SolvingProcess.ifCountered:
-                counterResolve();
+                BattleManager_Single.Instance.ChangeController();
+                Invoke("counterResolve", 0.5f);
                 break;
             case SolvingProcess.counterResolve:
-                activationResolve();
+                BattleManager_Single.Instance.ChangeController();
+                Invoke("activationResolve", 0.5f);
                 break;
             case SolvingProcess.activationResolve:
                 if (ifCounterDelayed)
                 {
-                    delayResolve();
+                    BattleManager_Single.Instance.ChangeController();
+                    Invoke("delayResolve", 0.5f);
                 }
                 else
                 {
-                    processEnd();
+                    Invoke("processEnd", 0.5f);
                 }
                 break;
             case SolvingProcess.delayResolve:
-                processEnd();
+                BattleManager_Single.Instance.ChangeController();
+                Invoke("processEnd", 0.5f);
                 break;
         }
     }
+
+    #endregion 
 
     public Player getUserByPhase()
     {
@@ -373,7 +393,5 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         }
         return result;
     }
-
-    #endregion 
 
 }

@@ -16,5 +16,4 @@ end
 function Resolve()
 effectList:PayCost()
 effectList:DeclareAttackByCard(false)
-effectList:DecreaseSP(CS.SolveTarget.opponent,3,false)
 end

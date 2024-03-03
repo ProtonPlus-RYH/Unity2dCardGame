@@ -7,6 +7,7 @@ using UnityEngine.EventSystems;
 using System;
 using System.Threading;
 using UnityEngine.SceneManagement;
+using Unity.VisualScripting;
 
 
 public enum GamePhase
@@ -46,10 +47,11 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     public Transform DistanceBar;
     public GameObject groundBlock;
-    public GameObject infoDisplayer;
+    public GameObject InfoDisplayer;
+    public GameObject AskingDialog;
+    public TextMeshProUGUI AskingDialog_Title;
     public GameObject textTMP;
 
-    public GameObject InfoDisplayer;
 
     public GameObject selfPlayerPrefab; //存储我方玩家数据
     public GameObject opponentPlayerPrefab;  //存储对手玩家数据
@@ -255,10 +257,20 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     {
         gamePhase = GamePhase.EndPhase;
         PhaseTMP.text = "我方结束阶段";
-
-        CloseControlling();//关闭卡牌使用可能性
-        resetCardCountInTurn(self);
-        HandCountCheck();
+        //处理未发动的预埋卡
+        if (opponent.fieldZone.cardCount() != 0)
+        {
+            ChangeController();
+            preSetCard = opponent.fieldZoneTransform.GetChild(0).gameObject;
+            LeanTween.rotateLocal(preSetCard, new Vector3(0f, 0f, 0f), 0.2f);
+            Invoke("PreSet_Use_Invoke", 0.3f);
+        }
+        else
+        {
+            CloseControlling();//关闭卡牌使用可能性
+            resetCardCountInTurn(self);
+            AskingPreSet();
+        }
     }
 
     public void opponentStandbyPhase()
@@ -291,9 +303,35 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     {
         gamePhase = GamePhase.OpponentEndPhase;
         PhaseTMP.text = "对方结束阶段";
-
-        CloseControlling();//关闭卡牌使用可能性
-        resetCardCountInTurn(opponent);
+        //处理未发动的预埋卡
+        if (self.fieldZone.cardCount() != 0)
+        {
+            ChangeController();
+            preSetCard = self.fieldZoneTransform.GetChild(0).gameObject;
+            LeanTween.rotateLocal(preSetCard, new Vector3(0f, 0f, 0f), 0.2f);
+            Invoke("PreSet_Use_Invoke", 0.3f);
+        }
+        else
+        {
+            CloseControlling();//关闭卡牌使用可能性
+            resetCardCountInTurn(opponent);
+            AskingPreSet();
+        }
+    }
+    
+    public void AskingPreSet()
+    {
+        if (controller.handZone.cardCount() != 0)
+        {
+            AskingDialog_Title.text = "请选择盖伏的卡牌，若不盖伏请选择取消";
+            CancelClick += CancelPreSet_event;
+            AskingDialog.SetActive(true);
+        }
+    }
+    public void CancelPreSet_event(object sender, EventArgs e)
+    {
+        AskingDialog.SetActive(false);
+        CancelClick -= CancelPreSet_event;
         HandCountCheck();
     }
 
@@ -342,6 +380,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
     }
 
+    
     public void HandCountCheck()
     {
         if (controller.handZone.cardCount() > maxHand)
@@ -450,11 +489,24 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
     }
 
-    
+    public void CardSet(GameObject card)
+    {
+        AskingDialog.SetActive(false);
+        CancelClick -= CancelPreSet_event;
+        Card thisCard = card.GetComponent<CardDisplay>().card;
+        thisCard.holdingPlayer.fieldZone.MoveOutEffectCheck(thisCard);
+        card.transform.SetParent(null);
+        card.transform.SetParent(thisCard.holdingPlayer.fieldZoneTransform);
+        card.GetComponent<RectTransform>().localPosition = new Vector3(0f, 0f, 0f);
+        card.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 180f, 0f);
+        //HandCountCheck();
+    }
+
     #endregion
 
 
     #region numerical changes
+
 
     public void ChangeLP(Player player, int num)
     {
@@ -587,12 +639,40 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
     }
 
+
     #endregion
 
 
-    #region supports
+    #region Actions
 
-    public bool coin()
+    public event EventHandler<AttackEventArgs> BeforeAttack;
+    public void AttackDeclare(Player player0)
+    {
+        BeforeAttack?.Invoke(this, new AttackEventArgs(player0));
+    }
+    public class AttackEventArgs : EventArgs
+    {
+        public Player attacker;
+        public AttackEventArgs(Player attacker0)
+        {
+            attacker = attacker0;
+        }
+    }
+
+
+    public GameObject preSetCard;
+    public void PreSet_Use_Invoke()
+    {
+        EffectTransformer.Instance.useCard(preSetCard);
+    }
+
+
+#endregion
+
+
+#region supports
+
+public bool coin()
     {
         bool result = false;
         int coin = UnityEngine.Random.Range(0, 2);

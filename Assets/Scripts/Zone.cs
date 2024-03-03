@@ -6,12 +6,10 @@ public class Zone : MonoBehaviour
 {
 
     public List<Buff> buffList;
-    //public List<EffectType> effectList;
 
     void Start()
     {
         buffList = new List<Buff>();
-        //effectList = new List<EffectType>();
     }
 
     public int cardCount()
@@ -19,17 +17,10 @@ public class Zone : MonoBehaviour
         return transform.childCount;
     }
 
-    /*public void Buff_BuffEnds(object sender, Buff.BuffEventArgs e)
-    {
-        RemoveBuff(e.buff);
-    }*/
 
     public void AddBuff(Buff buff)
     {
-        //AddEffect(buff.effectType, buff.effectReference);
-        //return buffList.Count - 1;
         buffList.Add(buff);
-        //buff.BuffEnd += Buff_BuffEnds;
         for (int i = 0; i < cardCount(); i++)
         {
             MoveInEffectCheck(transform.GetChild(i).GetComponent<CardDisplay>().card);
@@ -42,7 +33,6 @@ public class Zone : MonoBehaviour
         {
             MoveOutEffectCheck(transform.GetChild(i).GetComponent<CardDisplay>().card);
         }
-        //buff.BuffEnd -= Buff_BuffEnds;
         buffList.Remove(buff);
     }
 
@@ -67,43 +57,4 @@ public class Zone : MonoBehaviour
             }
         }
     }
-
-    /*public void AddEffect(EffectType effectType, int effectReference)
-    {
-        for (int i = 0; i < gameObject.transform.childCount; i++) 
-        {
-            ApplySingleEffect(gameObject.transform.GetChild(i).GetComponent<CardDisplay>().card, effectType, effectReference);
-        }
-    }
-    
-    public void ApplySingleEffect(Card card, EffectType effectType, int effectReference)
-    {
-        switch (effectType)
-        {
-            case EffectType.ifQuickChange:
-                card.SetIfQuickWithReturn(effectReference != 0);//0Îªfalse£¬1Îªtrue
-                break;
-        }
-    }
-    
-    public void RemoveEffect(int effectKey)
-    {
-
-        for (int i = 0; i < gameObject.transform.childCount; i++)
-        {
-            
-        }
-    }
-
-    
-
-    public void RemoveSingleEffect(Card card, EffectType effectType, int effectReference)
-    {
-        switch (effectType)
-        {
-            case EffectType.ifQuickChange:
-
-                break;
-        }
-    }*/
 }

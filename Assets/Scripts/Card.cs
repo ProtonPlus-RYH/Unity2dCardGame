@@ -9,7 +9,6 @@ public enum nullableBool
 }
 
 
-
 public class Card 
 {
     //首字母大写为原始属性，小写为局内属性
@@ -183,18 +182,36 @@ public class Card
 
     public void AddBuff(Buff buff)
     {
-        bool cardTypeCheck = true;
-        if (buff.effectType == EffectType.atkChange)
+        switch (buff.effectType)
         {
-            if (GetType() != typeof(AttackCard))
-            {
-                cardTypeCheck = false;
-            }
-        }
-        if (cardTypeCheck)
-        {
-            buffList.Add(buff);
-            BuffStartEffect(buff);
+            case EffectType.atkChange:
+                bool cardTypeCheck = true;
+                if (GetType() != typeof(AttackCard))
+                {
+                    cardTypeCheck = false;
+                }
+                if (cardTypeCheck)
+                {
+                    buffList.Add(buff);
+                    BuffStartEffect(buff);
+                }
+                break;
+            case EffectType.banCard:
+                bool cardIDCheck = true;
+                if (CardID != buff.effectReference)
+                {
+                    cardIDCheck = false;
+                }
+                if (cardIDCheck)
+                {
+                    buffList.Add(buff);
+                    BuffStartEffect(buff);
+                }
+                break;
+            default:
+                buffList.Add(buff);
+                BuffStartEffect(buff);
+                break;
         }
         
     }
@@ -221,25 +238,35 @@ public class Card
                     var attackCard = this as AttackCard;
                     attackCard.attackPower_current += buff.effectReference;
                 }
+                buffKeyList.Add(-1);
+                break;
+            case EffectType.banCard:
+                buffKeyList.Add(SetIfActivable(false));
                 break;
         }
     }
 
     public void BuffEndEffect(Buff buff)
     {
-        switch (buff.effectType)
+        if (buffList.Contains(buff))
         {
-            case EffectType.ifQuickChange:
-                ExtractIfQuick(buffKeyList[buffList.IndexOf(buff)]);
-                buffKeyList.RemoveAt(buffList.IndexOf(buff));
-                break;
-            case EffectType.atkChange:
-                if (GetType() == typeof(AttackCard))
-                {
-                    var attackCard = this as AttackCard;
-                    attackCard.attackPower_current -= buff.effectReference;
-                }
-                break;
+            switch (buff.effectType)
+            {
+                case EffectType.ifQuickChange:
+                    ExtractIfQuick(buffKeyList[buffList.IndexOf(buff)]);
+                    break;
+                case EffectType.atkChange:
+                    if (GetType() == typeof(AttackCard))
+                    {
+                        var attackCard = this as AttackCard;
+                        attackCard.attackPower_current -= buff.effectReference;
+                    }
+                    break;
+                case EffectType.banCard:
+                    ExtractIfActivable(buffKeyList[buffList.IndexOf(buff)]);
+                    break;
+            }
+            buffKeyList.RemoveAt(buffList.IndexOf(buff));
         }
     }
 

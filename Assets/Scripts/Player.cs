@@ -52,6 +52,7 @@ public class Player : MonoBehaviour
         buffList = new List<Buff>();
         damageTarget = EffectTarget.LP;
         damageTargetRecord = new List<EffectTarget>{damageTarget};
+        damageTargetOrderRecord = new List<Buff>();
     }
 
 
@@ -291,7 +292,7 @@ public class Player : MonoBehaviour
         {
             Destroy(deckZoneTransform.GetChild(i).gameObject);
         }
-        List<int> deck = library.readDeck(deckName);
+        List<int> deck = library.ReadDeck(deckName);
         for(int i=0; i<deck.Count; i++)
         {
             GameObject newCard = cardGenerate(deck[i], deckZoneTransform);
@@ -314,12 +315,12 @@ public class Player : MonoBehaviour
     public void drawMultipleCards(int num)
     {
         invokeCount_draw = num;
-        InvokeRepeating("drawSingleCard", 0f, 0.3f);
+        InvokeRepeating(nameof(drawSingleCard), 0f, 0.3f);
     }
     public void drawSingleCard()
     {
         drawCardAnimation();
-        Invoke("drawSingleCard_InvokedMethod", 0.25f);
+        Invoke(nameof(drawSingleCard_InvokedMethod), 0.25f);
     }
     public void drawSingleCard_InvokedMethod()
     {
@@ -327,7 +328,7 @@ public class Player : MonoBehaviour
         invokeCount_draw--;
         if (invokeCount_draw == 0)
         {
-            CancelInvoke("drawSingleCard");
+            CancelInvoke(nameof(drawSingleCard));
         }
     }
 
@@ -337,7 +338,7 @@ public class Player : MonoBehaviour
 
     public void drawCardAnimation()
     {
-        LeanTween.moveLocal(deckZoneTransform.GetChild(deckZoneTransform.childCount-1).gameObject, new Vector3(0f, 500f, 0f), 0.2f);
+        LeanTween.moveLocalY(deckZoneTransform.GetChild(deckZoneTransform.childCount-1).gameObject, 500f, 0.2f);
     }
 
     public void DamageAppear(int num)
@@ -392,7 +393,7 @@ public class Player : MonoBehaviour
                             case 1:
                                 damageTarget = EffectTarget.SP;
                                 damageTargetRecord.Add(EffectTarget.SP);
-                                damageTargetOrderRecord.Add(buffList.Count - 1);//第几条记录就是第几次修改
+                                damageTargetOrderRecord.Add(buff);
                                 break;
                         }
                         break;
@@ -421,9 +422,9 @@ public class Player : MonoBehaviour
                         BattleManager_Single.Instance.BeforeAttack -= Move_Trigger;
                         break;
                     case EffectType.damageTargetChange:
-                        damageTarget = damageTargetRecord[damageTargetOrderRecord.IndexOf(buffList.IndexOf(buff))];
-                        damageTargetRecord.RemoveAt(damageTargetOrderRecord.IndexOf(buffList.IndexOf(buff)));
-                        damageTargetOrderRecord.Remove(buffList.IndexOf(buff));
+                        damageTarget = damageTargetRecord[damageTargetOrderRecord.IndexOf(buff)];
+                        damageTargetRecord.RemoveAt(damageTargetOrderRecord.IndexOf(buff));
+                        damageTargetOrderRecord.Remove(buff);
                         break;
                 }
                 break;
@@ -447,7 +448,7 @@ public class Player : MonoBehaviour
     public int moveBeforeAttackNumRecord;
     public EffectTarget damageTarget;
     public List<EffectTarget> damageTargetRecord;
-    public List<int> damageTargetOrderRecord;
+    public List<Buff> damageTargetOrderRecord;
     public void Move_Trigger(object sender, BattleManager_Single.AttackEventArgs e)
     {
         if (e.attacker == this)
@@ -455,6 +456,8 @@ public class Player : MonoBehaviour
             BattleManager_Single.Instance.ChangeDistance(moveBeforeAttackNumRecord);
         }
     }
+
+
 
     #endregion
 

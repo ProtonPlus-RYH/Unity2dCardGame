@@ -28,10 +28,9 @@ local buffLastList={CS.BuffLast.actionLast}
 local lastReferenceList={0}
 effectList:GiveBuff(CS.SolveTarget.self,CS.EffectTarget.duelist,CS.EffectType.damageTargetChange,1,buffLastList,lastReferenceList,true)
 end
-end
-
-function AfterSelection_WhileCountered()
+effectList:DoSelection(CS.SolveTarget.self,CS.SelectionType.selectTF,1,false)
 end
 
 function AfterSelection_Resolve()
+effectList:ReturnCardToHand(CS.SolveTarget.self,CS.EffectTarget.fieldCard,0,true)
 end

@@ -54,7 +54,7 @@ public class CardDisplay : MonoBehaviour
         }
         else
         {
-            var actionCard = card as ActionCard;
+            //var actionCard = card as ActionCard;
             attackPowerText.gameObject.SetActive(false);
             attackPowerTitleText.gameObject.SetActive(false);
             distanceText.gameObject.SetActive(false);

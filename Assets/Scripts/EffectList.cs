@@ -6,12 +6,12 @@ using UnityEngine;
 
 public enum EffectTarget
 {
-    duelist, LP, MaxLP, SP, MaxSP, MP, MaxMP, handCard, handZone, deckCard, deckZone, graveCard, graveZone, fieldCard, fieldZone, holdingCard
+    duelist, LP, MaxLP, SP, MaxSP, MP, MaxMP, CurrentDistance, handCard, handZone, deckCard, deckZone, graveCard, graveZone, fieldCard, fieldZone, holdingCard
 }
 
 public enum JudgeType
 {
-    valueGreaterThan, valueLessThan, valueEqualTo, valueNotEqualTo, cardTypeIs
+    valueGreaterThan, valueLessThan, valueEqualTo, valueNotEqualTo, cardTypeIs, ifDistanceChanged
 }
 
 public enum EffectType
@@ -48,25 +48,34 @@ public class EffectList //: MonoSingleton<EffectList>
 
     public SelectionType selectingType;//存储执行的选择类型
     public int selectTimes = 0;
-    public void DoSelection(SolveTarget solveTarget, SelectionType selectionType, int selectQuantity)
+    public void DoSelection(SolveTarget solveTarget, SelectionType selectionType, int selectQuantity, bool ifJudged)
     {
-        Player player = EffectTransformer.Instance.getUserByPhase();
-        Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
-        if (!playerCard.ifNegated)
+        if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
-            selectingType = selectionType;
-            selectTimes = selectQuantity;
-            EffectTransformer.Instance.ifPaused = true;
-            EffectTransformer.Instance.ifDoingSelection = true;
-            switch (selectionType)
+            Player player = EffectTransformer.Instance.getUserByPhase();
+            Card playerCard = EffectTransformer.Instance.solvingCard;
+            if (!playerCard.ifNegated)
             {
-                case SelectionType.selectMovementWithCancel:
-                    BattleManager_Single.Instance.AskingDialog_Title.text = "请选择前进或者后退";
-                    BattleManager_Single.Instance.AskingDialog.SetActive(true);
-                    BattleManager_Single.Instance.MoveForwardClick += MoveForwardWithSelection;
-                    BattleManager_Single.Instance.MoveBackClick += MoveBackWithSelection;
-                    BattleManager_Single.Instance.CancelClick += SelectionEnd_Event;
-                    break;
+                selectingType = selectionType;
+                selectTimes = selectQuantity;
+                EffectTransformer.Instance.ifPaused = true;
+                EffectTransformer.Instance.ifDoingSelection = true;
+                switch (selectionType)
+                {
+                    case SelectionType.selectMovementWithCancel:
+                        BattleManager_Single.Instance.AskingDialog_Title.text = "请选择前进或者后退";
+                        BattleManager_Single.Instance.AskingDialog.SetActive(true);
+                        BattleManager_Single.Instance.MoveForwardClick += MoveForwardWithSelection;
+                        BattleManager_Single.Instance.MoveBackClick += MoveBackWithSelection;
+                        BattleManager_Single.Instance.CancelClick += SelectionEnd_Event;
+                        break;
+                    case SelectionType.selectTF://借用judge的结果
+                        BattleManager_Single.Instance.AskingDialog_2_Title.text = "是否执行下一步效果";
+                        BattleManager_Single.Instance.AskingDialog_2.SetActive(true);
+                        BattleManager_Single.Instance.CancelClick += SelectCancel;
+                        BattleManager_Single.Instance.ConfirmClick += SelectConfirm;
+                        break;
+                }
             }
         }
     }
@@ -76,7 +85,7 @@ public class EffectList //: MonoSingleton<EffectList>
     public void DoJudge(SolveTarget solveTarget, EffectTarget effectTarget, JudgeType judgeType, int judgingReference)
     {
         Player player = EffectTransformer.Instance.getUserByPhase();
-        Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+        Card playerCard = EffectTransformer.Instance.solvingCard;
         if (!playerCard.ifNegated)
         {
             judgingTarget = effectTarget;
@@ -111,6 +120,21 @@ public class EffectList //: MonoSingleton<EffectList>
                         }
                     }
                     break;
+                case EffectTarget.CurrentDistance:
+                    switch (judgeType)
+                    {
+                        case JudgeType.ifDistanceChanged:
+                            if (BattleManager_Single.Instance.distanceInGame == EffectTransformer.Instance.distanceWhileDeclareActivation)
+                            {
+                                EffectTransformer.Instance.judgeResult = false;
+                            }
+                            else
+                            {
+                                EffectTransformer.Instance.judgeResult = true;
+                            }
+                            break;
+                    }
+                    break;
             }
         }
         else
@@ -125,7 +149,7 @@ public class EffectList //: MonoSingleton<EffectList>
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = EffectTransformer.Instance.getUserByPhase();
-            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = EffectTransformer.Instance.solvingCard;
             if (!playerCard.ifNegated)
             {
                 Buff buff = new Buff(solveTarget, effectTarget, effectType, effectReference, buffLast, lastReference);
@@ -154,7 +178,7 @@ public class EffectList //: MonoSingleton<EffectList>
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = EffectTransformer.Instance.getUserByPhase();
-            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = EffectTransformer.Instance.solvingCard;
             if (!playerCard.ifNegated)
             {
                 if (ifUseStamina)
@@ -183,7 +207,7 @@ public class EffectList //: MonoSingleton<EffectList>
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = EffectTransformer.Instance.getUserByPhase();
-            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = EffectTransformer.Instance.solvingCard;
             var attackCard = playerCard as AttackCard;
             int damage = attackCard.attackPower_current;
             int distance = attackCard.distance_current;
@@ -214,7 +238,7 @@ public class EffectList //: MonoSingleton<EffectList>
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = EffectTransformer.Instance.getUserByPhase();
-            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = EffectTransformer.Instance.solvingCard;
             if (!playerCard.ifNegated)
             {
                 if (attacker == SolveTarget.self)
@@ -249,7 +273,7 @@ public class EffectList //: MonoSingleton<EffectList>
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = EffectTransformer.Instance.getUserByPhase();
-            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = EffectTransformer.Instance.solvingCard;
             if (!playerCard.ifNegated)
             {
                 if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
@@ -262,6 +286,14 @@ public class EffectList //: MonoSingleton<EffectList>
                     {
                         BattleManager_Single.Instance.ChangeSP(player, num * (-1));
                     }
+                    else if (player.opponent.damageTarget == EffectTarget.MP)
+                    {
+                        BattleManager_Single.Instance.ChangeMP(player, num * (-1));
+                    }
+                    else
+                    {
+                        Debug.Log("伤害目标不合法");
+                    }
                 }
                 if (solveTarget == SolveTarget.opponent || solveTarget == SolveTarget.both)
                 {
@@ -273,6 +305,14 @@ public class EffectList //: MonoSingleton<EffectList>
                     else if (player.opponent.damageTarget == EffectTarget.SP)
                     {
                         BattleManager_Single.Instance.ChangeSP(player.opponent, num * (-1));
+                    }
+                    else if (player.opponent.damageTarget == EffectTarget.MP)
+                    {
+                        BattleManager_Single.Instance.ChangeMP(player.opponent, num * (-1));
+                    }
+                    else
+                    {
+                        Debug.Log("伤害目标不合法");
                     }
                 }
             }
@@ -288,7 +328,7 @@ public class EffectList //: MonoSingleton<EffectList>
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = EffectTransformer.Instance.getUserByPhase();
-            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = EffectTransformer.Instance.solvingCard;
             if (!playerCard.ifNegated)
             {
                 if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
@@ -312,7 +352,7 @@ public class EffectList //: MonoSingleton<EffectList>
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = EffectTransformer.Instance.getUserByPhase();
-            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = EffectTransformer.Instance.solvingCard;
             if (!playerCard.ifNegated)
             {
                 if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
@@ -336,7 +376,7 @@ public class EffectList //: MonoSingleton<EffectList>
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = EffectTransformer.Instance.getUserByPhase();
-            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = EffectTransformer.Instance.solvingCard;
             if (!playerCard.ifNegated)
             {
                 if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
@@ -360,7 +400,7 @@ public class EffectList //: MonoSingleton<EffectList>
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = EffectTransformer.Instance.getUserByPhase();
-            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = EffectTransformer.Instance.solvingCard;
             if (!playerCard.ifNegated)
             {
                 if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
@@ -384,7 +424,7 @@ public class EffectList //: MonoSingleton<EffectList>
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = EffectTransformer.Instance.getUserByPhase();
-            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = EffectTransformer.Instance.solvingCard;
             if (!playerCard.ifNegated)
             {
                 if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
@@ -406,7 +446,7 @@ public class EffectList //: MonoSingleton<EffectList>
     public void PayCost()
     {
         Player player = EffectTransformer.Instance.getUserByPhase();
-        Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+        Card playerCard = EffectTransformer.Instance.solvingCard;
         int spCost = playerCard.staminaCost_current;
         int mpCost = playerCard.manaCost_current;
         if (!playerCard.ifNegated)
@@ -425,7 +465,7 @@ public class EffectList //: MonoSingleton<EffectList>
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = EffectTransformer.Instance.getUserByPhase();
-            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = EffectTransformer.Instance.solvingCard;
             if (!playerCard.ifNegated)
             {
                 if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
@@ -444,12 +484,62 @@ public class EffectList //: MonoSingleton<EffectList>
         }
     }
 
+    public void ReturnCardToDeck(SolveTarget solveTarget, EffectTarget effectTarget, int effectTargetReference, bool ifBottom, bool ifShuffle, bool ifJudged)
+    {
+        if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
+        {
+            Player player = EffectTransformer.Instance.getUserByPhase();
+            Card playerCard = EffectTransformer.Instance.solvingCard;
+            if (!playerCard.ifNegated)
+            {
+                switch (effectTarget)
+                {
+                    case EffectTarget.fieldCard:
+                        if (solveTarget == SolveTarget.self)
+                        {
+                            BattleManager_Single.Instance.FieldCardReturnToDeck(player, ifBottom, ifShuffle);
+                        }
+                        break;
+                }
+            }
+            else
+            {
+                Debug.Log("被无效");
+            }
+        }
+    }
+
+    public void ReturnCardToHand(SolveTarget solveTarget, EffectTarget effectTarget, int effectTargetReference, bool ifJudged)
+    {
+        if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
+        {
+            Player player = EffectTransformer.Instance.getUserByPhase();
+            Card playerCard = EffectTransformer.Instance.solvingCard;
+            if (!playerCard.ifNegated)
+            {
+                switch (effectTarget)
+                {
+                    case EffectTarget.fieldCard:
+                        if (solveTarget == SolveTarget.self)
+                        {
+                            BattleManager_Single.Instance.FieldCardReturnToHand(player);
+                        }
+                        break;
+                }
+            }
+            else
+            {
+                Debug.Log("被无效");
+            }
+        }
+    }
+
     public void Negate(SolveTarget solveTarget, bool ifJudged)
     {
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = EffectTransformer.Instance.getUserByPhase();
-            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = EffectTransformer.Instance.solvingCard;
             bool ifOpponentCardExists = false;
             if (player.opponent.fieldZone.cardCount() != 0)
             {
@@ -460,11 +550,24 @@ public class EffectList //: MonoSingleton<EffectList>
             {
                 if (solveTarget == SolveTarget.opponent && ifOpponentCardExists || solveTarget == SolveTarget.both && ifOpponentCardExists)
                 {
-                    int queueNum = player.opponent.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card.SetIfNegated(true);
+                    if (player == EffectTransformer.Instance.activingCard.holdingPlayer)
+                    {
+                        EffectTransformer.Instance.negatedKey_Counter = player.opponent.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card.SetIfNegated(true);
+                    }else if (player == EffectTransformer.Instance.counterCard.holdingPlayer)
+                    {
+                        EffectTransformer.Instance.negatedKey_Activer = player.opponent.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card.SetIfNegated(true);
+                    }
                 }
                 if (solveTarget == SolveTarget.self || solveTarget == SolveTarget.both)
                 {
-                    int queueNum = playerCard.SetIfNegated(true);
+                    if (player == EffectTransformer.Instance.activingCard.holdingPlayer)
+                    {
+                        EffectTransformer.Instance.negatedKey_Activer = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card.SetIfNegated(true);
+                    }
+                    else if (player == EffectTransformer.Instance.counterCard.holdingPlayer)
+                    {
+                        EffectTransformer.Instance.negatedKey_Counter = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card.SetIfNegated(true);
+                    }
                 }
             }
             else
@@ -479,7 +582,7 @@ public class EffectList //: MonoSingleton<EffectList>
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = EffectTransformer.Instance.getUserByPhase();
-            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = EffectTransformer.Instance.solvingCard;
             if (!playerCard.ifNegated)
             {
                 if (EffectTransformer.Instance.processPhase == SolvingProcess.activationDeclare)
@@ -503,7 +606,7 @@ public class EffectList //: MonoSingleton<EffectList>
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
             Player player = EffectTransformer.Instance.getUserByPhase();
-            Card playerCard = player.fieldZoneTransform.GetChild(0).gameObject.GetComponent<CardDisplay>().card;
+            Card playerCard = EffectTransformer.Instance.solvingCard;
             if (!playerCard.ifNegated)
             {
                 EffectTransformer.Instance.ifCounterDelayed = true;
@@ -533,6 +636,12 @@ public class EffectList //: MonoSingleton<EffectList>
                 BattleManager_Single.Instance.MoveBackClick -= MoveBackWithSelection;
                 BattleManager_Single.Instance.CancelClick -= SelectionEnd_Event;
                 break;
+            case SelectionType.selectTF:
+                BattleManager_Single.Instance.AskingDialog_2.SetActive(false);
+                BattleManager_Single.Instance.ConfirmClick -= SelectConfirm;
+                BattleManager_Single.Instance.CancelClick -= SelectCancel;
+                break;
+
         }
         EffectTransformer.Instance.selectSolve();
     }
@@ -554,6 +663,18 @@ public class EffectList //: MonoSingleton<EffectList>
         {
             SelectionEnd();
         }
+    }
+
+    public void SelectConfirm(object sender, EventArgs e)
+    {
+        EffectTransformer.Instance.judgeResult = true;
+        SelectionEnd();
+    }
+
+    public void SelectCancel(object sender, EventArgs e)
+    {
+        EffectTransformer.Instance.judgeResult = false;
+        SelectionEnd();
     }
 
     #endregion

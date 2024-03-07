@@ -142,7 +142,7 @@ public class Card
     public bool GetIfActivable()
     {
         bool result = ifActivable;
-        if (useCount_turn>UseLimit_turn || useCount_duel>UseLimit_duel)
+        if ((useCount_turn >= UseLimit_turn && UseLimit_turn != 0) || (useCount_duel >= UseLimit_duel && UseLimit_duel != 0))
         {
             result = false;
         }
@@ -153,14 +153,14 @@ public class Card
     {
         ifNegatedRecord.Add(boolToNullable(result));
         ifNegated = result;
-        return ifNegatedRecord.Count;
+        return ifNegatedRecord.Count - 1;
     }
 
     public void ExtractIfNegated(int queueNum)//先把取号者设空；从最后往前读，遇到空的就跳过
     {
         ifNegatedRecord[queueNum] = nullableBool.b_null;
         bool ifGetRecord = false;
-        int recordCount = ifNegatedRecord.Count;
+        int recordCount = ifNegatedRecord.Count - 1;
         while (!ifGetRecord)
         {
             if (ifNegatedRecord[recordCount] != nullableBool.b_null)

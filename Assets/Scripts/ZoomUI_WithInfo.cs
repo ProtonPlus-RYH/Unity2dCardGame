@@ -8,16 +8,6 @@ public class ZoomUI_WithInfo : MonoBehaviour, IPointerEnterHandler, IPointerExit
 
     public float zoomSize;
     
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 
     public void OnPointerEnter(PointerEventData pointerEventData)
     {

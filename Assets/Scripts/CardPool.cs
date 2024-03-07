@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System.IO;
+using System.Text;
 
 public class CardPool : MonoBehaviour
 {
@@ -17,10 +18,8 @@ public class CardPool : MonoBehaviour
         string[] cardCSVData = cardCSV.text.Split('\n');
         weaponAmount = 0;
         belongAmount = 0;
-        weaponList = new List<string>(weaponAmount);
-        weaponList.Add("通用");
-        belongList = new List<string>(belongAmount);
-        belongList.Add("通用");
+        weaponList = new List<string>(weaponAmount){"通用"};
+        belongList = new List<string>(belongAmount){"通用"};
         foreach (var row in cardCSVData)
         {
             string[] cardData = row.Split(',');
@@ -70,10 +69,13 @@ public class CardPool : MonoBehaviour
         }
     }
 
-    public List<int> readDeck(string deckName)
+    public List<int> ReadDeck(string deckName)
     {
         List<int> cardsInDeck = new List<int>();
-        using (var reader = new StreamReader("Assets\\ResourceFiles\\Decks\\" + deckName + ".csv"))
+        StringBuilder pathSB = new StringBuilder("Assets\\ResourceFiles\\Decks\\");
+        pathSB.Append(deckName);
+        pathSB.Append(".csv");
+        using (var reader = new StreamReader(pathSB.ToString()))
         {
             int cardCount = 0;
             while (!reader.EndOfStream)

@@ -21,6 +21,9 @@ public class DeckManager : MonoBehaviour
     public GameObject LibraryCardPrefab;
     public GameObject DeckCardPrefab;
 
+    public TextMeshProUGUI deckIllegalHint;
+    public TextMeshProUGUI hintTMP;
+
     public CardPool library;
 
     public string deckFolderPath;
@@ -107,7 +110,7 @@ public class DeckManager : MonoBehaviour
 
     #endregion
 
-    #region functions about Interactions
+    #region functions about UIs
 
     public void OnButtonClickGotoMenu()
     {
@@ -154,13 +157,19 @@ public class DeckManager : MonoBehaviour
 
     public void OnButtonClickSaveDeck()
     {
-        List<string> savedDeck = new List<string>();
-        savedDeck.Add("Versus Card Game Simulation Made By ProtonPlus");
-        foreach(var line in editingDeckList)
+        if (WeaponTypeCheck())
         {
-            savedDeck.Add(line.ToString());
+            List<string> savedDeck = new List<string> { "Versus Card Game Simulation Made By ProtonPlus" };
+            foreach (var line in editingDeckList)
+            {
+                savedDeck.Add(line.ToString());
+            }
+            File.WriteAllLines(deckFolderPath + "\\" + editingDeckName + ".csv", savedDeck);
         }
-        File.WriteAllLines(deckFolderPath + "\\" + editingDeckName + ".csv", savedDeck);
+        else
+        {
+            hint("武器数量超过2种,无法保存");
+        }
     }
 
     public void DropDownDeckSelect(int deckOrderNum)
@@ -168,7 +177,37 @@ public class DeckManager : MonoBehaviour
         deckSelect(deckNameList[deckOrderNum]);
     }
 
+    public void hint(string str)
+    {
+        hintTMP.text = str;
+        hintTMP.gameObject.SetActive(true);
+        Invoke(nameof(closeHint), 2.0f);
+    }
+    public void closeHint()
+    {
+        hintTMP.gameObject.SetActive(false);
+    }
+
     #endregion
+
+    public bool WeaponTypeCheck()
+    {
+        List<int> weaponIDRecord = new List<int>();
+        bool result = true;
+        foreach (int cardID in editingDeckList)
+        {
+            if (!weaponIDRecord.Contains(library.cardPool[cardID].WeaponID) && library.cardPool[cardID].WeaponID != 0)
+            {
+                weaponIDRecord.Add(library.cardPool[cardID].WeaponID);
+            }
+        }
+        if (weaponIDRecord.Count > 2)
+        {
+            result = false;
+        }
+        deckIllegalHint.gameObject.SetActive(!result);
+        return result;
+    }
 
     public void addCardToDeck(int cardIDNum)
     {
@@ -177,6 +216,7 @@ public class DeckManager : MonoBehaviour
             GameObject newCard = Instantiate(DeckCardPrefab, deckPanel);
             newCard.GetComponent<CardDisplay>().card = library.cardPool[cardIDNum];
             editingDeckList.Add(cardIDNum);
+            WeaponTypeCheck();
         }
     }
 
@@ -186,6 +226,7 @@ public class DeckManager : MonoBehaviour
         {
             Destroy(deckPanel.GetChild(cardOrderNum).gameObject);
             editingDeckList.RemoveAt(cardOrderNum);
+            WeaponTypeCheck();
         }
     }
     
@@ -195,7 +236,7 @@ public class DeckManager : MonoBehaviour
         {
             Destroy(deckPanel.GetChild(i).gameObject);
         }
-        List<int> cardsInDeck = library.readDeck(deckName);
+        List<int> cardsInDeck = library.ReadDeck(deckName);
         for (int i = 0; i < cardsInDeck.Count; i++)
         {
             GameObject newCard = Instantiate(DeckCardPrefab, deckPanel);
@@ -203,8 +244,9 @@ public class DeckManager : MonoBehaviour
         }
         PlayerPrefs.SetString("editingDeck", deckName);
         editingDeckName = deckName;
-        editingDeckList = library.readDeck(deckName);
+        editingDeckList = library.ReadDeck(deckName);
         deckSelectDropDown.SetValueWithoutNotify(getOrderFromDeckName(deckName));
+        WeaponTypeCheck();
     }
 
     public void createDeck(string deckName, int repeatCount)

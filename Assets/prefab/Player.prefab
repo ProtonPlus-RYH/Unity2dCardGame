@@ -416,7 +416,7 @@ RectTransform:
   m_GameObject: {fileID: 1568473151343160817}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.49999997, y: 0.49999997, z: 0.49999997}
+  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7351650240750046626}
@@ -1397,16 +1397,16 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 5241585095858710040}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -9.313226e-10, y: -0, z: 2.1827873e-11, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
+  m_LocalScale: {x: 0.49999997, y: 0.49999997, z: 0.5}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 3318389097085037898}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 150, y: 150}
+  m_AnchoredPosition: {x: 149.99998, y: 150}
   m_SizeDelta: {x: 200, y: 300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &1906859130251391030
@@ -2142,10 +2142,7 @@ RectTransform:
   m_LocalScale: {x: 2, y: 2, z: 2}
   m_ConstrainProportionsScale: 1
   m_Children:
-  - {fileID: 5125324579314844460}
   - {fileID: 5057704552303855847}
-  - {fileID: 8639216587530069446}
-  - {fileID: 8807341205501425398}
   - {fileID: 7189657706674378904}
   - {fileID: 7068043475106970524}
   - {fileID: 8018448465289048044}
@@ -2154,6 +2151,9 @@ RectTransform:
   - {fileID: 2952539728010116889}
   - {fileID: 1971424260966041450}
   - {fileID: 1972271854642993428}
+  - {fileID: 8807341205501425398}
+  - {fileID: 5125324579314844460}
+  - {fileID: 8639216587530069446}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -2202,6 +2202,9 @@ MonoBehaviour:
   library: {fileID: 394008339195043625, guid: b83266d92775b4e45993e6203f31ad04, type: 3}
   opponent: {fileID: 0}
   invokeCount_draw: 0
+  moveBeforeAttackNumRecord: 0
+  damageTarget: 0
+  damageTargetRecord: 
 --- !u!1 &7750388159773032767
 GameObject:
   m_ObjectHideFlags: 0

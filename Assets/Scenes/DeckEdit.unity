@@ -6660,6 +6660,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1815493220}
     - target: {fileID: 5044343443504090765, guid: 962ec5b8814970642a79c61767e107fa, type: 3}
+      propertyPath: deckFolderPath
+      value: Assets\ResourceFiles\Decks
+      objectReference: {fileID: 0}
+    - target: {fileID: 5044343443504090765, guid: 962ec5b8814970642a79c61767e107fa, type: 3}
       propertyPath: deckIllegalHint
       value: 
       objectReference: {fileID: 1415062136}

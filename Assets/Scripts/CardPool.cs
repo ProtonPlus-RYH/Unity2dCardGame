@@ -72,7 +72,15 @@ public class CardPool : MonoBehaviour
     public List<int> ReadDeck(string deckName)
     {
         List<int> cardsInDeck = new List<int>();
-        StringBuilder pathSB = new StringBuilder("Assets\\ResourceFiles\\Decks\\");
+
+        string[] path = Application.dataPath.Split("/");
+        StringBuilder pathSB = new StringBuilder();
+        for (int i = 0; i < path.Length - 1; i++)
+        {
+            pathSB.Append(path[i]);
+            pathSB.Append("/");
+        }
+        pathSB.Append("Decks/");
         pathSB.Append(deckName);
         pathSB.Append(".csv");
         using (var reader = new StreamReader(pathSB.ToString()))

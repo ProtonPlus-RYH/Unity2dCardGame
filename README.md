@@ -1,6 +1,8 @@
 //有个中文字体太大了，压缩了放进来的；
 //要去 Assets\TextMesh Pro\Resources\Fonts & Materials 里面找SIMFANG SDF.zip解压
 
+//GitHub里面空间有限就只放了这些进来，其他东西在Unity里面新建项目的时候应该是有的
+
 //引入了XLua用来给每张卡自定义卡牌效果
 
 //2.25：正在编各种效果，包括卡牌属性设置，延时效果比如ep回血回精力什么的。

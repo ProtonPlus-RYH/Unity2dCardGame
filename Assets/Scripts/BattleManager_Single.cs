@@ -3,11 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
 using System;
-using System.Threading;
 using UnityEngine.SceneManagement;
-using Unity.VisualScripting;
 using System.Text;
 
 
@@ -84,8 +81,22 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         self = selfPlayerPrefab.GetComponent<Player>();
         opponent = opponentPlayerPrefab.GetComponent<Player>();
         buffListInGame = new List<Buff>();
-        self.getDeck(PlayerPrefs.GetString("SelfDeck"));
-        opponent.getDeck(PlayerPrefs.GetString("OpponentDeck"));
+        if (PlayerPrefs.HasKey("SelfDeck"))
+        {
+            self.getDeck(PlayerPrefs.GetString("SelfDeck"));
+        }
+        else
+        {
+            self.getDeck("new deck");
+        }
+        if (PlayerPrefs.HasKey("OpponentDeck"))
+        {
+            opponent.getDeck(PlayerPrefs.GetString("OpponentDeck"));
+        }
+        else
+        {
+            opponent.getDeck("new deck");
+        }
         self.shuffleDeck();
         opponent.shuffleDeck();
         turnCount = 1;
@@ -139,6 +150,21 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     {
         
     }
+
+    #region interactions
+
+    public void hint(string str)
+    {
+        textTMP.GetComponent<TextMeshProUGUI>().text = str;
+        textTMP.SetActive(true);
+        Invoke(nameof(closeHint), 2.0f);
+    }
+    public void closeHint()
+    {
+        textTMP.SetActive(false);
+    }
+    #endregion
+
 
     #region buttons
 

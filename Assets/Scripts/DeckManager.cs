@@ -1,10 +1,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using System.IO;
 using TMPro;
+using System.Text;
+using Unity.VisualScripting;
 
 public class DeckManager : MonoBehaviour
 {
@@ -26,7 +27,8 @@ public class DeckManager : MonoBehaviour
 
     public CardPool library;
 
-    public string deckFolderPath;
+    public string APPpath;
+    public string DeckPath;
     private int weapon1BelongID;
     private int weapon2BelongID;
     private int weapon1WeaponID;
@@ -34,11 +36,21 @@ public class DeckManager : MonoBehaviour
     private List<string> deckNameList;
     private string editingDeckName;
     private List<int> editingDeckList;
-    private int repeatDeckNameCount = 0;
 
 
     void Start()
     {
+        string[] path = Application.dataPath.Split("/");
+        StringBuilder pathSB = new StringBuilder();
+        for (int i = 0; i < path.Length - 1; i++)
+        {
+            pathSB.Append(path[i]);
+            pathSB.Append("/");
+        }
+        APPpath = pathSB.ToString();
+        pathSB.Append("Decks");
+        DeckPath = pathSB.ToString();
+
         library.getAllCards();
         getDeckFromFolder();
 
@@ -51,11 +63,11 @@ public class DeckManager : MonoBehaviour
 
         weapon1Select(0);
         weapon2Select(0);
-        
+        /*
         if (deckNameList.Count == 0)
         {
             createDeck("new deck", 0);
-        }
+        }*/
         editingDeckName = deckNameList[0];
         if (PlayerPrefs.HasKey("editingDeck"))
         {
@@ -119,11 +131,15 @@ public class DeckManager : MonoBehaviour
     
     public void OnButtonClickDeckDelete()
     {
-        string filePath = deckFolderPath + "\\" + editingDeckName + ".csv";
-        if (File.Exists(filePath))
+        StringBuilder pathSB = new StringBuilder(DeckPath);
+        pathSB.Append("/");
+        pathSB.Append(editingDeckName);
+        pathSB.Append(".csv");;
+        if (File.Exists(pathSB.ToString()))
         {
-            File.Delete(filePath);
-            File.Delete(filePath + ".meta");
+            File.Delete(pathSB.ToString());
+            pathSB.Append(".meta");
+            File.Delete(pathSB.ToString());
         }
         else
         {
@@ -164,7 +180,11 @@ public class DeckManager : MonoBehaviour
             {
                 savedDeck.Add(line.ToString());
             }
-            File.WriteAllLines(deckFolderPath + "\\" + editingDeckName + ".csv", savedDeck);
+            StringBuilder pathSB = new StringBuilder(DeckPath);
+            pathSB.Append("/");
+            pathSB.Append(editingDeckName);
+            pathSB.Append(".csv"); ;
+            File.WriteAllLines(pathSB.ToString(), savedDeck);
         }
         else
         {
@@ -249,15 +269,15 @@ public class DeckManager : MonoBehaviour
         WeaponTypeCheck();
     }
 
+    private int repeatDeckNameCount = 0;
     public void createDeck(string deckName, int repeatCount)
     {
-        string repeatCountStr = repeatCount.ToString();
-        if(repeatCount == 0)
+        StringBuilder deckNameSB = new StringBuilder(deckName);
+        if(repeatCount != 0)
         {
-            repeatCountStr = "";
+            deckNameSB.Append(repeatCount.ToString());
         }
-        string fullName = deckName + repeatCountStr;
-        if (deckNameList.Contains(fullName))
+        if (deckNameList.Contains(deckNameSB.ToString()))
         {
             repeatDeckNameCount++;
             repeatCount = repeatDeckNameCount;
@@ -265,28 +285,44 @@ public class DeckManager : MonoBehaviour
         }
         else
         {
-            using (StreamWriter streamWriter = new StreamWriter(deckFolderPath + "\\" + fullName + ".csv"))
+            StringBuilder pathSB = new StringBuilder(DeckPath);
+            pathSB.Append("/");
+            pathSB.Append(deckNameSB.ToString());
+            pathSB.Append(".csv");
+            using (StreamWriter streamWriter = new StreamWriter(pathSB.ToString()))
             {
                 streamWriter.WriteLine("Versus Card Game Simulation Made By ProtonPlus");
             }
             repeatDeckNameCount = 0;
             getDeckFromFolder();
-            deckSelect(fullName);
+            deckSelect(deckNameSB.ToString());
         }
     }
     
     public void getDeckFromFolder()
     {
-        string[] deckFiles = Directory.GetFiles(deckFolderPath, "*.csv");
+        string[] deckFiles = Directory.GetFiles(DeckPath, "*.csv");
         deckNameList = new List<string>(deckFiles);
         for (int i = 0; i < deckNameList.Count; i++)
         {
-            string[] pathFolders = deckNameList[i].Split("\\");
+            string[] pathFolders = deckNameList[i].Split("/");
             string[] fileName = pathFolders[pathFolders.Length - 1].Split(".");
-            deckNameList[i] = fileName[0];
+            string[] fileNameDeletingReverseSlash = fileName[0].Split("\\");
+            if (fileNameDeletingReverseSlash.Length == 2)
+            {
+                deckNameList[i] = fileNameDeletingReverseSlash[1];
+            }else if (fileNameDeletingReverseSlash.Length == 1)
+            {
+                deckNameList[i] = fileNameDeletingReverseSlash[0];
+            }
         }
         deckSelectDropDown.ClearOptions();
         deckSelectDropDown.AddOptions(deckNameList);
+
+        if (deckNameList.Count == 0)
+        {
+            createDeck("new deck", 0);
+        }
     }
 
     public int getOrderFromDeckName(string deckName)

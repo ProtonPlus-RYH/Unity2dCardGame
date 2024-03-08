@@ -66,7 +66,8 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
 
     byte[] CardLuaLoader(ref string fileName)//¿¨ÅÆLuaÎÄ¼þ¶ÁÈ¡
     {
-        StringBuilder pathSB = new StringBuilder("Assets\\ResourceFiles\\CardScripts\\");
+        StringBuilder pathSB = new StringBuilder(Application.streamingAssetsPath);
+        pathSB.Append("/ResourceFiles/CardScripts/");
         pathSB.Append(fileName);
         pathSB.Append(".lua");
         byte[] result = File.ReadAllBytes(pathSB.ToString());

@@ -26,11 +26,12 @@ public class CardInteraction : MonoBehaviour, IPointerDownHandler, IBeginDragHan
     public void OnEndDrag(PointerEventData eventData)
     {
         Player cardUser = transform.parent.parent.parent.GetComponent<Player>();
-        if (transform.position.y > 200 && cardUser == BattleManager_Single.Instance.self)
+        //拖到1/4高度就扔出去
+        if (transform.localPosition.y > 225 && cardUser == BattleManager_Single.Instance.self)
         {
             DragCardUse();
         }
-        else if (transform.position.y < 300 && cardUser == BattleManager_Single.Instance.opponent)
+        else if (transform.localPosition.y < -225 && cardUser == BattleManager_Single.Instance.opponent)
         {
             DragCardUse();
         }
@@ -64,7 +65,8 @@ public class CardInteraction : MonoBehaviour, IPointerDownHandler, IBeginDragHan
                     else if (!card.ifQuick_current)
                     {
                         transform.position = originalPosition;
-                        Debug.Log("还用不了");
+                        BattleManager_Single.Instance.hint("还用不了");
+                        //Debug.Log("还用不了");
                     }
                     break;
             }
@@ -75,55 +77,62 @@ public class CardInteraction : MonoBehaviour, IPointerDownHandler, IBeginDragHan
             transform.position = originalPosition;
             if (!card.GetIfActivable())
             {
-                Debug.Log("被禁用");
+                BattleManager_Single.Instance.hint("被禁用");
+                //Debug.Log("被禁用");
             }
             if (!card.ifControlling)
             {
-                Debug.Log("控制权在对手");
+                BattleManager_Single.Instance.hint("控制权在对手");
+                //Debug.Log("控制权在对手");
             }
             if (cardUser.SP == 0)
             {
-                Debug.Log("精力不足");
+                BattleManager_Single.Instance.hint("精力不足");
+                //Debug.Log("精力不足");
             }
             if (cardUser.MP < card.manaCost_current)
             {
-                Debug.Log("集中力不足");
+                BattleManager_Single.Instance.hint("集中力不足");
+                //Debug.Log("集中力不足");
             }
         }
     }
 
-    public void CardPreSet()
+    public void CardPreSet(Player cardUser)
     {
-        Player cardUser = transform.parent.parent.parent.GetComponent<Player>();
         Card card = gameObject.GetComponent<CardDisplay>().card;
-        if (cardUser.SP != 0 && cardUser.MP >= card.manaCost_current && (cardUser == BattleManager_Single.Instance.self && BattleManager_Single.Instance.gamePhase == GamePhase.EndPhase && EffectTransformer.Instance.processPhase!= SolvingProcess.activationDeclare || cardUser == BattleManager_Single.Instance.opponent && BattleManager_Single.Instance.gamePhase == GamePhase.OpponentEndPhase && EffectTransformer.Instance.processPhase != SolvingProcess.activationDeclare))
-        //预埋阶段，要求cost满足以及阶段正确
+        if (cardUser.SP != 0 && cardUser.MP >= card.manaCost_current)
         {
             BattleManager_Single.Instance.CardSet(gameObject);
             BattleManager_Single.Instance.HandCountCheck();
         }else if (cardUser.SP == 0)
         {
-            Debug.Log("精力不足");
+            BattleManager_Single.Instance.hint("精力不足");
+            //Debug.Log("精力不足");
         }
         if (cardUser.MP < card.manaCost_current)
         {
-            Debug.Log("集中力不足");
+            BattleManager_Single.Instance.hint("集中力不足");
+            //Debug.Log("集中力不足");
         }
     }
     public void CardDiscard()
     {
         Player cardUser = transform.parent.parent.parent.GetComponent<Player>();
-        if (cardUser == BattleManager_Single.Instance.self && BattleManager_Single.Instance.gamePhase == GamePhase.selfHandDiscarding || cardUser == BattleManager_Single.Instance.opponent && BattleManager_Single.Instance.gamePhase == GamePhase.opponentHandDiscarding)
-        //弃牌阶段
-        {
-            BattleManager_Single.Instance.DiscardCard(cardUser, gameObject.transform.GetSiblingIndex());
-            BattleManager_Single.Instance.HandCountCheck();
-        }
+        BattleManager_Single.Instance.DiscardCard(cardUser, gameObject.transform.GetSiblingIndex());
+        BattleManager_Single.Instance.HandCountCheck();
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
-        CardPreSet();
-        CardDiscard();
+        Player cardUser = transform.parent.parent.parent.GetComponent<Player>();
+        if ((cardUser == BattleManager_Single.Instance.self && BattleManager_Single.Instance.gamePhase == GamePhase.EndPhase && EffectTransformer.Instance.processPhase != SolvingProcess.activationDeclare || cardUser == BattleManager_Single.Instance.opponent && BattleManager_Single.Instance.gamePhase == GamePhase.OpponentEndPhase && EffectTransformer.Instance.processPhase != SolvingProcess.activationDeclare))
+        {
+            CardPreSet(cardUser);
+        }
+        if (cardUser == BattleManager_Single.Instance.self && BattleManager_Single.Instance.gamePhase == GamePhase.selfHandDiscarding || cardUser == BattleManager_Single.Instance.opponent && BattleManager_Single.Instance.gamePhase == GamePhase.opponentHandDiscarding)
+        {
+            CardDiscard();
+        }
     }
 }

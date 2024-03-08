@@ -295,6 +295,7 @@ public class Player : MonoBehaviour
         List<int> deck = library.ReadDeck(deckName);
         for(int i=0; i<deck.Count; i++)
         {
+            Debug.Log("Éú³É¿¨ÅÆ");
             GameObject newCard = cardGenerate(deck[i], deckZoneTransform);
             deckGet(newCard, true);
         }

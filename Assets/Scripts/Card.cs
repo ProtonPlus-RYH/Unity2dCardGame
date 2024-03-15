@@ -297,7 +297,7 @@ public class Card
         }
         else if(result == nullableBool.b_null)
         {
-            Debug.Log("bool空了，返回个true先");
+            //Debug.Log("bool空了，返回个true先");
         }
         return retValue;
     }

@@ -1,15 +1,15 @@
-﻿ID,Weapon Type,Weapon ID,Belong Type,Belong ID,Type,Name,Stamina Cost,Mana Cost,Attack,Distance,Discription,If Quick,Use Limit per Turn,Use Limit per Duel
-0,通用,0,魂,1,行动,原素瓶,0,0,0,0,整场游戏限制5次；[发动时]询问对应，且对应此卡时对手可以使用任意手牌进行对应；[处理时]回复5点生命值,否,0,5
-1,通用,0,魂,1,行动,原素灰瓶,0,0,0,0,整场游戏限制5次；[发动时]询问对应，且对手可以使用任意手牌进行对应；[处理时]回复5点集中力,否,0,5
-2,通用,0,魂,1,行动,翻滚,2,0,0,0,[被对应时]若被攻击对应，使此次攻击无效；[处理时]若对应攻击发动，使此次攻击无效；可选当前距离+1或-1,是,0,0
-3,通用,0,魂,1,攻击,黑火焰壶,2,0,2,8,整场游戏限制5次；每回合限制1次；[处理时]若处理前距离相对发动时发生了变动，无效此卡；,否,1,5
-4,通用,0,魂,1,攻击,踢击,2,0,0,2,[处理时]对手精力值减少3,否,0,0
-5,通用,0,魂,1,攻击,猎捕不死人护符,0,0,0,6,整场游戏限制5次；每回合限制1次；[处理时]若处理前距离相对发动时发生了变动，无效此卡；包括此回合的3个回合内，对手不能使用原素瓶及原素灰瓶,否,1,5
-6,直剑,1,魂,1,攻击,轻攻击,3,0,3,3,/,否,0,0
-7,直剑,1,魂,1,攻击,重攻击,4,0,4,3,/,否,0,0
-8,直剑,1,魂,1,行动,准备架势,0,3,0,0,[处理时]直到自己的下个回合到来前，下一次行动若为攻击，则攻击力+1，且那次攻击前当前距离-1,否,0,0
-9,中盾,2,魂,1,攻击,轻攻击,2,0,1,2,/,否,0,0
-10,中盾,2,魂,1,行动,防御,0,0,0,0,[被对应时]若被攻击对应，使此次攻击的伤害值由精力代替承受；[处理时]若对应攻击发动，使此次攻击的伤害值由精力代替承受；可令此卡返回手牌,是,0,0
-11,匕首,3,魂,1,攻击,轻攻击,2,0,2,2,[处理时]攻击后，可令此卡返回卡组并且抽取一张卡牌,否,0,0
-12,匕首,3,魂,1,攻击,重攻击,3,0,3,2,/,否,0,0
-13,匕首,3,魂,1,行动,滑步,1,1,0,0,[被对应时]若被攻击对应，使此次攻击无效；[处理时]若对应攻击发动，使此次攻击无效；可选当前距离+1或-1,是,0,0
+﻿ID,Weapon Type in SC,Weapon ID,Belong Type in SC,Belong ID,Type in SC,Name in SC,Stamina Cost,Mana Cost,Attack,Distance,Discription in SC,If Quick in SC,Use Limit per Turn,Use Limit per Duel,Weapon Type in EN,Belong Type in EN,Type in EN,Name in EN,Discription in EN
+0,通用,0,魂,1,行动,原素瓶,0,0,0,0,整场游戏限制5次；[发动时]询问对应，且对应此卡时对手可以使用任意手牌进行对应；[处理时]回复5点生命值。,否,0,5,Common,Dark Souls,action,Estus Flask,Use limit 5 times per game; [Activating]Asking for counterattack，and opponent can use any hand for counterattack; [Solving]Restore 5 HP.
+1,通用,0,魂,1,行动,原素灰瓶,0,0,0,0,整场游戏限制5次；[发动时]询问对应，且对手可以使用任意手牌进行对应；[处理时]回复5点集中力。,否,0,5,Common,Dark Souls,action,Ashen Estus Flask,Use limit 5 times per game; [Activating]Asking for counterattack，and opponent can use any hand for counterattack; [Solving]Restore 5 FP.
+2,通用,0,魂,1,行动,翻滚,1,0,0,0,[被对应时]若被攻击对应，使此次攻击无效；[处理时]若对应攻击发动，使此次攻击无效；可选当前距离+1或-1。,是,0,0,Common,Dark Souls,action,Roll (Dodge),[If being countered]If being countered by an attack，negate that attack；[Solving]If use this card for counterattack to an attack，negate that attack; You can do +1 distance or -1 distance.
+3,通用,0,魂,1,攻击,黑火焰壶,2,0,2,8,整场游戏限制5次；每回合限制1次；[处理时]若处理前距离相对发动时发生了变动，无效此卡。,否,1,5,Common,Dark Souls,attack,Black Firebomb,Use limit 5 times per game; Use limit 1 time per turn; [Solving]If distance was changed relatived to the distance while declaring activation，negate this card.
+4,通用,0,魂,1,攻击,踢击,2,0,0,2,[处理时]对手精力值减少3。,否,0,0,Common,Dark Souls,attack,Kick,[Solving]Opponent decrease 3 Stamina.
+5,通用,0,魂,1,攻击,猎捕不死人护符,0,0,0,6,整场游戏限制5次；每回合限制1次；[处理时]若处理前距离相对发动时发生了变动，无效此卡；包括此回合的3个回合内，对手不能使用原素瓶及原素灰瓶。,否,1,5,Common,Dark Souls,attack,Lloyd's Tailsman,Use limit 5 times per game; Use limit 1 time per turn; [Solving]If distance was changed relatived to the distance while declaring activation，negate this card; During following 3 turns (including this turn) your opponent cannot use Estus Flask or Ashened Estus Flask.
+6,直剑,1,魂,1,攻击,轻攻击,3,0,3,3,/,否,0,0,Straight Sword,Dark Souls,attack,Attack,/
+7,直剑,1,魂,1,攻击,重攻击,4,0,4,3,/,否,0,0,Straight Sword,Dark Souls,attack,Strong Attack,/
+8,直剑,1,魂,1,行动,准备架势,0,3,0,0,[处理时]直到自己的下个回合到来前，下一次行动若为攻击，则攻击力+1，且那次攻击前当前距离-1。,否,0,0,Straight Sword,Dark Souls,action,Stance,"[Solving]Before next turn of yourself, if next action is an attack，it gets +1 attack power，and -1 distance before declaring that attack."
+9,中盾,2,魂,1,攻击,轻攻击,2,0,1,2,/,否,0,0,Shield,Dark Souls,attack,Attack,/
+10,中盾,2,魂,1,行动,防御,0,0,0,0,[被对应时]若被攻击对应，使此次攻击的伤害值由精力代替承受；[处理时]若对应攻击发动，使此次攻击的伤害值由精力代替承受；可令此卡返回手牌。,是,0,0,Shield,Dark Souls,action,Defence,[If being countered]If being countered by an attack，let your Stamina to take the damage instead of HP; [Solving]If use this card for counterattack to an attack，let your Stamina to take the damage instead of HP; You can return this card to hand.
+11,匕首,3,魂,1,攻击,轻攻击,2,0,2,2,[处理时]攻击后，可令此卡返回卡组并且抽取一张卡牌。,否,0,0,Dagger,Dark Souls,attack,Attack,[Solving]You can let this card return to deck and draw one card after solving the attack
+12,匕首,3,魂,1,攻击,重攻击,3,0,3,2,/,否,0,0,Dagger,Dark Souls,attack,Strong Attack,/
+13,匕首,3,魂,1,行动,滑步,0,1,0,0,[被对应时]若被攻击对应，使此次攻击无效；[处理时]若对应攻击发动，使此次攻击无效；可选当前距离+1或-1。,是,0,0,Dagger,Dark Souls,action,Quickstep,[If being countered]If being countered by an attack，negate that attack；[Solving]If use this card for counterattack to an attack，negate that attack; You can do +1 distance or -1 distance.

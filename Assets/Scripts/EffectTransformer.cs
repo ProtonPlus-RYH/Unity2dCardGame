@@ -128,7 +128,7 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
 
     public void askCounter()//询问对应
     {
-        BattleManager_Single.Instance.AskingDialog_Title.text = "请选择对应卡片";
+        BattleManager_Single.Instance.AskingDialog_Title.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_Effect_AskCounter");
         BattleManager_Single.Instance.AskingDialog.SetActive(true);
     }
 
@@ -176,8 +176,7 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
     {
         processPhase = SolvingProcess.ifNotCountered;
         solvingCard = activingCard;
-        //Debug.Log("处理若未被对应"); 
-        //Action whileNotCountered = luaenv_Active.Global.Get<Action>("WhileNotCountered");
+        //Debug.Log("处理若未被对应");
         LuaFunction D_whileNotCountered = luaenv_Active.Global.Get<LuaFunction>("WhileNotCountered");
         D_whileNotCountered.Call();
         if (!ifPaused)
@@ -191,7 +190,6 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         processPhase = SolvingProcess.ifCountered;
         solvingCard = activingCard;
         //Debug.Log("处理若被对应");
-        //Action whileCountered = luaenv_Active.Global.Get<Action>("WhileCountered");
         LuaFunction D_whileCountered = luaenv_Active.Global.Get<LuaFunction>("WhileCountered");
         D_whileCountered.Call();
         if (!ifPaused)
@@ -207,7 +205,6 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         if (!ifCounterDelayed)
         {
             //Debug.Log("处理对应");
-            //Action counterResolve = luaenv_Counter.Global.Get<Action>("Resolve");
             LuaFunction D_counterResolve = luaenv_Counter.Global.Get<LuaFunction>("Resolve");
             D_counterResolve.Call();
         }
@@ -223,7 +220,6 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         processPhase = SolvingProcess.activationResolve;
         solvingCard = activingCard;
         //Debug.Log("处理效果");
-        //Action activationResolve = luaenv_Active.Global.Get<Action>("Resolve");
         LuaFunction D_activationResolve = luaenv_Active.Global.Get<LuaFunction>("Resolve");
         D_activationResolve.Call();
         if (!ifPaused)
@@ -237,7 +233,6 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         processPhase = SolvingProcess.delayResolve;
         solvingCard = counterCard;
         //Debug.Log("处理延迟对应");
-        //Action delayResolve = luaenv_Counter.Global.Get<Action>("Resolve");
         LuaFunction D_delayResolve = luaenv_Counter.Global.Get<LuaFunction>("Resolve");
         D_delayResolve.Call();
         if (!ifPaused)
@@ -310,7 +305,7 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         switch (processPhase)
         {
             case SolvingProcess.beforeActivation:
-                Debug.Log("在处理阶段外");
+                //Debug.Log("在处理阶段外");
                 break;
             case SolvingProcess.activationDeclare:
                 phase = "ActivationDeclare";
@@ -326,7 +321,7 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
                 break;
             case SolvingProcess.endProcess:
                 phase = "AfterResolve";
-                Debug.Log("处理结束");
+                //Debug.Log("处理结束");
                 break;
             default:
                 phase = "Resolve";
@@ -337,13 +332,11 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
         phaseFunctionSB.Append(phase);
         if (processPhase == SolvingProcess.counterDeclare || processPhase == SolvingProcess.counterResolve || processPhase == SolvingProcess.delayResolve)
         {
-            //Action afterSelection = luaenv_Counter.Global.Get<Action>(phaseFunctionSB.ToString());
             LuaFunction D_afterSelection = luaenv_Counter.Global.Get<LuaFunction>(phaseFunctionSB.ToString());
             D_afterSelection.Call();
         }
         else
         {
-            //Action afterSelection = luaenv_Active.Global.Get<Action>("AfterSelection_" + phase);
             LuaFunction D_afterSelection = luaenv_Active.Global.Get<LuaFunction>(phaseFunctionSB.ToString());
             D_afterSelection.Call();
         }
@@ -383,12 +376,12 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
                 break;
             case SolvingProcess.counterResolve:
                 BattleManager_Single.Instance.ChangeController();
-                BattleManager_Single.Instance.textTMP.GetComponent<TextMeshProUGUI>().text = "处理对应效果";
+                BattleManager_Single.Instance.textTMP.GetComponent<TextMeshProUGUI>().text = LanguageManager.Instance.GetLocalizedString("LocalizationText_Effect_SolvingCounter");
                 BattleManager_Single.Instance.textTMP.SetActive(true);
                 Invoke(nameof(activationResolve), 0.5f);
                 break;
             case SolvingProcess.activationResolve:
-                BattleManager_Single.Instance.textTMP.GetComponent<TextMeshProUGUI>().text = "处理效果";
+                BattleManager_Single.Instance.textTMP.GetComponent<TextMeshProUGUI>().text = LanguageManager.Instance.GetLocalizedString("LocalizationText_Effect_SolvingActivation");
                 BattleManager_Single.Instance.textTMP.SetActive(true);
                 if (ifCounterDelayed)
                 {
@@ -402,7 +395,7 @@ public class EffectTransformer : MonoSingleton<EffectTransformer>
                 break;
             case SolvingProcess.delayResolve:
                 BattleManager_Single.Instance.ChangeController();
-                BattleManager_Single.Instance.textTMP.GetComponent<TextMeshProUGUI>().text = "延迟处理对应效果";
+                BattleManager_Single.Instance.textTMP.GetComponent<TextMeshProUGUI>().text = LanguageManager.Instance.GetLocalizedString("LocalizationText_Effect_DelayResolved");
                 BattleManager_Single.Instance.textTMP.SetActive(true);
                 Invoke(nameof(processEnd), 0.5f);
                 break;

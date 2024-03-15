@@ -1,0 +1,244 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: NewTable Shared Data
+  m_EditorClassIdentifier: 
+  m_TableCollectionName: NewTable
+  m_TableCollectionNameGuidString: 0989f5053d383b04aa7583cf2de63403
+  m_Entries:
+  - m_Id: 171501006848
+    m_Key: LocalizationText_Title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 422534295552
+    m_Key: LocalizationText_Start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 626125811712
+    m_Key: LocalizationText_DeckEdit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 2476589821952
+    m_Key: LocalizationText_LanguageTitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4428014923776
+    m_Key: LocalizationText_LanguageSelectingTitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4675701157888
+    m_Key: LocalizationText_PlayerBelowDeck
+    m_Metadata:
+      m_Items: []
+  - m_Id: 4872871194624
+    m_Key: LocalizationText_PlayerUpperDeck
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9086930366464
+    m_Key: LocalizationText_Delete
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9188319277056
+    m_Key: LocalizationText_CreateDeck
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9268682141696
+    m_Key: LocalizationText_Save
+    m_Metadata:
+      m_Items: []
+  - m_Id: 9784241795072
+    m_Key: LocalizationText_Back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10233871183872
+    m_Key: LocalizationText_DeckCount
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10340544917504
+    m_Key: LocalizationText_GraveCount
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10679704727552
+    m_Key: LocalizationText_StepForward
+    m_Metadata:
+      m_Items: []
+  - m_Id: 10820671090688
+    m_Key: LocalizationText_StepBack
+    m_Metadata:
+      m_Items: []
+  - m_Id: 12099354996736
+    m_Key: LocalizationText_Surrender
+    m_Metadata:
+      m_Items: []
+  - m_Id: 13580716060672
+    m_Key: LocalizationText_DistanceTitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14391961563136
+    m_Key: LocalizationText_EndTurn
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14713710817280
+    m_Key: LocalizationText_StaminaCostTitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 14927075061760
+    m_Key: LocalizationText_ManaCostTitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 16769460842496
+    m_Key: LocalizationText_AttackPointTitle
+    m_Metadata:
+      m_Items: []
+  - m_Id: 365046119116800
+    m_Key: LocalizationText_BelowPlayer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 365163932921856
+    m_Key: LocalizationText_UpperPlayer
+    m_Metadata:
+      m_Items: []
+  - m_Id: 365274285060096
+    m_Key: LocalizationText_Win
+    m_Metadata:
+      m_Items: []
+  - m_Id: 365743204052992
+    m_Key: LocalizationText_StandbyPhase
+    m_Metadata:
+      m_Items: []
+  - m_Id: 365869536489472
+    m_Key: LocalizationText_MainPhase
+    m_Metadata:
+      m_Items: []
+  - m_Id: 365956064980992
+    m_Key: LocalizationText_EndPhase
+    m_Metadata:
+      m_Items: []
+  - m_Id: 366049031729152
+    m_Key: LocalizationText_OpponentStandbyPhase
+    m_Metadata:
+      m_Items: []
+  - m_Id: 366177868165120
+    m_Key: LocalizationText_OpponentMainPhase
+    m_Metadata:
+      m_Items: []
+  - m_Id: 366321716015104
+    m_Key: LocalizationText_OpponentEndPhase
+    m_Metadata:
+      m_Items: []
+  - m_Id: 366616776912896
+    m_Key: LocalizationText_MyTurn
+    m_Metadata:
+      m_Items: []
+  - m_Id: 366813514936320
+    m_Key: LocalizationText_OpponentTurn
+    m_Metadata:
+      m_Items: []
+  - m_Id: 367615008681984
+    m_Key: LocalizationText_DiscardRequest
+    m_Metadata:
+      m_Items: []
+  - m_Id: 368324433260544
+    m_Key: LocalizationText_OpponentHandDiscarding
+    m_Metadata:
+      m_Items: []
+  - m_Id: 368576284438528
+    m_Key: LocalizationText_WeaponOver2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 370007460655104
+    m_Key: LocalizationText_Selection_Move
+    m_Metadata:
+      m_Items: []
+  - m_Id: 370383807164416
+    m_Key: LocalizationText_Selection_IfDoNext
+    m_Metadata:
+      m_Items: []
+  - m_Id: 371262530629632
+    m_Key: LocalizationText_DeckError
+    m_Metadata:
+      m_Items: []
+  - m_Id: 371925520068608
+    m_Key: LocalizationText_DeckError_Over2
+    m_Metadata:
+      m_Items: []
+  - m_Id: 375558382923776
+    m_Key: LocalizationText_Effect_SolvingCounter
+    m_Metadata:
+      m_Items: []
+  - m_Id: 375740168253440
+    m_Key: LocalizationText_Effect_SolvingActivation
+    m_Metadata:
+      m_Items: []
+  - m_Id: 376280767901696
+    m_Key: LocalizationText_Effect_DelayResolved
+    m_Metadata:
+      m_Items: []
+  - m_Id: 376608871526400
+    m_Key: LocalizationText_Effect_AskCounter
+    m_Metadata:
+      m_Items: []
+  - m_Id: 376751809212416
+    m_Key: LocalizationText_Cancel
+    m_Metadata:
+      m_Items: []
+  - m_Id: 377339053715456
+    m_Key: LocalizationText_Confirm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 381296924798976
+    m_Key: LocalizationText_DeckNameAsk
+    m_Metadata:
+      m_Items: []
+  - m_Id: 384626946322432
+    m_Key: LocalizationText_AskPreset
+    m_Metadata:
+      m_Items: []
+  - m_Id: 386307549409280
+    m_Key: LocalizationText_Hint_Negated
+    m_Metadata:
+      m_Items: []
+  - m_Id: 386855115796480
+    m_Key: LocalizationText_Hint_Escaped
+    m_Metadata:
+      m_Items: []
+  - m_Id: 387530260328448
+    m_Key: LocalizationText_Hint_NotQuick
+    m_Metadata:
+      m_Items: []
+  - m_Id: 387888504221696
+    m_Key: LocalizationText_Hint_Banned
+    m_Metadata:
+      m_Items: []
+  - m_Id: 388012018085888
+    m_Key: LocalizationText_Hint_ControllerError
+    m_Metadata:
+      m_Items: []
+  - m_Id: 388141269757952
+    m_Key: LocalizationText_Hint_StaminaNotEnough
+    m_Metadata:
+      m_Items: []
+  - m_Id: 388531436498944
+    m_Key: LocalizationText_Hint_ManaNotEnough
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 1827655837688791065
+  references:
+    version: 2
+    RefIds:
+    - rid: 1827655837688791065
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1710427796530

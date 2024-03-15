@@ -5,7 +5,6 @@ using UnityEngine.SceneManagement;
 using System.IO;
 using TMPro;
 using System.Text;
-using Unity.VisualScripting;
 
 public class DeckManager : MonoBehaviour
 {
@@ -63,11 +62,6 @@ public class DeckManager : MonoBehaviour
 
         weapon1Select(0);
         weapon2Select(0);
-        /*
-        if (deckNameList.Count == 0)
-        {
-            createDeck("new deck", 0);
-        }*/
         editingDeckName = deckNameList[0];
         if (PlayerPrefs.HasKey("editingDeck"))
         {
@@ -143,7 +137,7 @@ public class DeckManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("未找到" + editingDeckName + ".csv");
+            //Debug.Log("未找到" + editingDeckName + ".csv");
         }
         getDeckFromFolder();
         deckSelect(deckNameList[0]);
@@ -188,7 +182,7 @@ public class DeckManager : MonoBehaviour
         }
         else
         {
-            hint("武器数量超过2种,无法保存");
+            hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_WeaponOver2"));
         }
     }
 
@@ -339,7 +333,7 @@ public class DeckManager : MonoBehaviour
         }
         if (ifSelected == false)
         {
-            Debug.Log("没找到");
+            //Debug.Log("没找到");
             result = 0;
         }
         return result;

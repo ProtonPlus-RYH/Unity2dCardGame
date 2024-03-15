@@ -4,6 +4,7 @@ using System.IO;
 using System.Text;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Localization.Settings;
 using UnityEngine.SceneManagement;
 
 public class MenuManager : MonoBehaviour
@@ -11,6 +12,7 @@ public class MenuManager : MonoBehaviour
 
     public TMP_Dropdown deckSelectDropDown_self;
     public TMP_Dropdown deckSelectDropDown_opponent;
+    public TMP_Dropdown languageSelectDropDown;
     public TextMeshProUGUI deckIllegalHint_self;
     public TextMeshProUGUI deckIllegalHint_opponent;
 
@@ -39,6 +41,14 @@ public class MenuManager : MonoBehaviour
             Directory.CreateDirectory(DeckPath);
         }
         getDeckFromFolder();
+        if (LocalizationSettings.SelectedLocale == LocalizationSettings.AvailableLocales.Locales[0])
+        {
+            languageSelectDropDown.SetValueWithoutNotify(0);
+        }
+        else if (LocalizationSettings.SelectedLocale == LocalizationSettings.AvailableLocales.Locales[1])
+        {
+            languageSelectDropDown.SetValueWithoutNotify(1);
+        }
         Invoke(nameof(DeckInitialize), 0.1f);
     }
     public void DeckInitialize()

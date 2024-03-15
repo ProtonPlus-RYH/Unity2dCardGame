@@ -46,7 +46,7 @@ public class CardInteraction : MonoBehaviour, IPointerDownHandler, IBeginDragHan
     {
         Player cardUser = transform.parent.parent.parent.GetComponent<Player>();
         Card card = gameObject.GetComponent<CardDisplay>().card;
-        if (card.GetIfActivable() && card.ifControlling && cardUser.SP != 0 && cardUser.MP >= card.manaCost_current)
+        if (card.GetIfActivable() && card.ifControlling && cardUser.SP != 0 && cardUser.MP >= card.manaCost_current && (BattleManager_Single.Instance.gamePhase != GamePhase.GameStart))
         {
             switch (EffectTransformer.Instance.processPhase)
             {
@@ -65,7 +65,7 @@ public class CardInteraction : MonoBehaviour, IPointerDownHandler, IBeginDragHan
                     else if (!card.ifQuick_current)
                     {
                         transform.position = originalPosition;
-                        BattleManager_Single.Instance.hint("还用不了");
+                        BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_NotQuick"));
                         //Debug.Log("还用不了");
                     }
                     break;
@@ -77,22 +77,22 @@ public class CardInteraction : MonoBehaviour, IPointerDownHandler, IBeginDragHan
             transform.position = originalPosition;
             if (!card.GetIfActivable())
             {
-                BattleManager_Single.Instance.hint("被禁用");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Banned"));
                 //Debug.Log("被禁用");
             }
             if (!card.ifControlling)
             {
-                BattleManager_Single.Instance.hint("控制权在对手");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_ControllerError"));
                 //Debug.Log("控制权在对手");
             }
             if (cardUser.SP == 0)
             {
-                BattleManager_Single.Instance.hint("精力不足");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_StaminaNotEnough"));
                 //Debug.Log("精力不足");
             }
             if (cardUser.MP < card.manaCost_current)
             {
-                BattleManager_Single.Instance.hint("集中力不足");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_ManaNotEnough"));
                 //Debug.Log("集中力不足");
             }
         }
@@ -107,12 +107,12 @@ public class CardInteraction : MonoBehaviour, IPointerDownHandler, IBeginDragHan
             BattleManager_Single.Instance.HandCountCheck();
         }else if (cardUser.SP == 0)
         {
-            BattleManager_Single.Instance.hint("精力不足");
+            BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_StaminaNotEnough"));
             //Debug.Log("精力不足");
         }
         if (cardUser.MP < card.manaCost_current)
         {
-            BattleManager_Single.Instance.hint("集中力不足");
+            BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_ManaNotEnough"));
             //Debug.Log("集中力不足");
         }
     }

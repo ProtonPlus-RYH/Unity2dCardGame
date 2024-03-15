@@ -6,6 +6,9 @@ using UnityEngine.UI;
 using System;
 using UnityEngine.SceneManagement;
 using System.Text;
+using UnityEngine.Localization.Settings;
+using UnityEngine.Localization;
+using UnityEngine.Localization.Tables;
 
 
 public enum GamePhase
@@ -58,7 +61,10 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     public GameObject opponentPlayerPrefab;  //存储对手玩家数据
 
     #endregion
-    
+
+    private Locale currentLanguage;
+    //private LocalizedStringTable languageTable;
+
     public CardPool library;
     public EffectTransformer effectManager;
 
@@ -73,6 +79,8 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     void Start()
     {
+        currentLanguage = LocalizationSettings.SelectedLocale;
+        //languageTable = ;
         MoveForwardClick += Action_MoveForward;
         MoveBackClick += Action_MoveBack;
         QuitClick += QuitGame;
@@ -107,7 +115,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
         self.initialStatusSet(maxLifePoint, maxStaminaPoint, maxManaPoint);
         opponent.initialStatusSet(maxLifePoint, maxStaminaPoint, maxManaPoint);
-        PhaseTMP.text = "游戏开始";
+        PhaseTMP.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_Start");
 
         //投硬币决定先后手
         self.ifGoingFirst = true;
@@ -134,6 +142,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
         
     }
+
 
     public void firstPlayerCardDraw()
     {
@@ -267,8 +276,6 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     public void standbyPhase()
     {
-        //gamePhase = GamePhase.StandbyPhase;
-        //PhaseTMP.text = "我方准备阶段";
         if (self.deckZone.cardCount() == 0)
         {
             //强制卡组再构筑
@@ -281,20 +288,16 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
             drawNum = 2;
         }
         ChangeSP(self, 4);
-        Invoke("phasePush",drawNum * 0.3f);
+        Invoke(nameof(phasePush), drawNum * 0.3f);
     }
 
     public void mainPhase()
     {
-        //gamePhase = GamePhase.MainPhase;
-        //PhaseTMP.text = "我方主要阶段";
         OpenControlling();//打开卡牌使用可能性
     }
 
     public void endPhase()
     {
-        //gamePhase = GamePhase.EndPhase;
-        //PhaseTMP.text = "我方结束阶段";
         //处理未发动的预埋卡
         if(turnCount != 1)
         {
@@ -305,7 +308,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
             ChangeController();
             preSetCard = opponent.fieldZoneTransform.GetChild(0).gameObject;
             LeanTween.rotateLocal(preSetCard, new Vector3(0f, 0f, 0f), 0.2f);
-            Invoke("PreSet_Use_Invoke", 0.3f);
+            Invoke(nameof(PreSet_Use_Invoke), 0.3f);
         }
         else
         {
@@ -317,7 +320,6 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     public void opponentStandbyPhase()
     {
-        //gamePhase = GamePhase.OpponentStandbyPhase;
         if (opponent.deckZone.cardCount() == 0)
         {
             //强制卡组再构筑
@@ -330,20 +332,16 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
             drawNum = 2;
         }
         ChangeSP(opponent, 4);
-        Invoke("phasePush", drawNum * 0.3f);
+        Invoke(nameof(phasePush), drawNum * 0.3f);
     }
 
     public void opponentMainPhase()
     {
-        //gamePhase = GamePhase.OpponentMainPhase;
-        //PhaseTMP.text = "对方主要阶段";
         OpenControlling();//打开卡牌使用可能性
     }
 
     public void opponentEndPhase()
     {
-        //gamePhase = GamePhase.OpponentEndPhase;
-        //PhaseTMP.text = "对方结束阶段";
         //处理未发动的预埋卡
         if(turnCount != 1)
         {
@@ -354,7 +352,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
             ChangeController();
             preSetCard = self.fieldZoneTransform.GetChild(0).gameObject;
             LeanTween.rotateLocal(preSetCard, new Vector3(0f, 0f, 0f), 0.2f);
-            Invoke("PreSet_Use_Invoke", 0.3f);
+            Invoke(nameof(PreSet_Use_Invoke), 0.3f);
         }
         else
         {
@@ -368,7 +366,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     {
         if (controller.handZone.cardCount() != 0)
         {
-            AskingDialog_Title.text = "请选择盖伏的卡牌，若不盖伏请选择取消";
+            AskingDialog_Title.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_AskPreset");
             CancelClick += CancelPreSet_event;
             AskingDialog.SetActive(true);
         }
@@ -386,15 +384,15 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
 
     public void GameOver(Player winner)
     {
-        quitTMP.text = "返回";
+        quitTMP.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_Back");
         ifGameOver = true;
         gamePhase = GamePhase.GameOver;
-        string playerName = "下方玩家";
+        string playerName = LanguageManager.Instance.GetLocalizedString("LocalizationText_BelowPlayer");
         if (winner == opponent)
         {
-            playerName = "上方玩家";
+            playerName = LanguageManager.Instance.GetLocalizedString("LocalizationText_UpperPlayer");
         }
-        textTMP.GetComponent<TextMeshProUGUI>().text = playerName + "获胜";
+        textTMP.GetComponent<TextMeshProUGUI>().text = playerName + LanguageManager.Instance.GetLocalizedString("LocalizationText_Win");
         textTMP.SetActive(true);
     }
 
@@ -403,59 +401,51 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         switch (gamePhase)
         {
             case GamePhase.StandbyPhase:
-                //PhaseChangeHintText.text = "主要阶段";
-                //phaseChangeHintAnimation();
                 gamePhase = GamePhase.MainPhase;
-                PhaseTMP.text = "主要阶段";
+                PhaseTMP.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_MainPhase");
                 Invoke("mainPhase", 0.5f);
                 break;
             case GamePhase.MainPhase:
-                //PhaseChangeHintText.text = "结束阶段";
-                //phaseChangeHintAnimation();
                 gamePhase = GamePhase.EndPhase;
-                PhaseTMP.text = "结束阶段";
+                PhaseTMP.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_EndPhase");
                 Invoke("endPhase", 0.5f);
                 break;
             case GamePhase.EndPhase:
-                PhaseChangeHintText.text = "对方回合";
+                PhaseChangeHintText.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_OpponentTurn");
                 phaseChangeHintAnimation();
                 gamePhase = GamePhase.OpponentStandbyPhase;
-                PhaseTMP.text = "对方准备阶段";
+                PhaseTMP.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_OpponentStandbyPhase");
                 Invoke("opponentStandbyPhase", 0.5f);
                 break;
             case GamePhase.selfHandDiscarding:
-                PhaseChangeHintText.text = "对方回合";
+                PhaseChangeHintText.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_OpponentTurn");
                 phaseChangeHintAnimation();
                 gamePhase = GamePhase.OpponentStandbyPhase;
-                PhaseTMP.text = "对方准备阶段";
+                PhaseTMP.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_OpponentStandbyPhase");
                 Invoke("opponentStandbyPhase", 0.5f);
                 break;
             case GamePhase.OpponentStandbyPhase:
-                //PhaseChangeHintText.text = "主要阶段";
-                //phaseChangeHintAnimation();
                 gamePhase = GamePhase.OpponentMainPhase;
-                PhaseTMP.text = "对方主要阶段";
+                PhaseTMP.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_OpponentMainPhase");
                 Invoke("opponentMainPhase", 0.5f);
                 break;
             case GamePhase.OpponentMainPhase:
-                //PhaseChangeHintText.text = "结束阶段";
-                //phaseChangeHintAnimation();
                 gamePhase = GamePhase.OpponentEndPhase;
-                PhaseTMP.text = "对方结束阶段";
+                PhaseTMP.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_OpponentEndPhase");
                 Invoke("opponentEndPhase", 0.5f);
                 break;
             case GamePhase.OpponentEndPhase:
-                PhaseChangeHintText.text = "我方回合";
+                PhaseChangeHintText.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_MyTurn");
                 phaseChangeHintAnimation();
                 gamePhase = GamePhase.StandbyPhase;
-                PhaseTMP.text = "准备阶段";
+                PhaseTMP.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_StandbyPhase");
                 Invoke("standbyPhase", 0.5f);
                 break;
             case GamePhase.opponentHandDiscarding:
-                PhaseChangeHintText.text = "我方回合";
+                PhaseChangeHintText.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_MyTurn");
                 phaseChangeHintAnimation();
                 gamePhase = GamePhase.StandbyPhase;
-                PhaseTMP.text = "准备阶段";
+                PhaseTMP.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_StandbyPhase");
                 Invoke("standbyPhase", 0.5f);
                 break;
         }
@@ -488,15 +478,14 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
     {
         if (gamePhase == GamePhase.EndPhase)
         {
-            StringBuilder discardHintSB = new StringBuilder("请弃置手牌至");
+            StringBuilder discardHintSB = new StringBuilder(LanguageManager.Instance.GetLocalizedString("LocalizationText_DiscardRequest"));
             discardHintSB.Append(maxHand.ToString());
-            discardHintSB.Append("张");
             textTMP.GetComponent<TextMeshProUGUI>().text = discardHintSB.ToString();
             gamePhase = GamePhase.selfHandDiscarding;
         }
         else if (gamePhase == GamePhase.OpponentEndPhase)
         {
-            textTMP.GetComponent<TextMeshProUGUI>().text = "对手弃置手牌中";
+            textTMP.GetComponent<TextMeshProUGUI>().text = LanguageManager.Instance.GetLocalizedString("LocalizationText_OpponentHandDiscarding");
             gamePhase = GamePhase.opponentHandDiscarding;
         }
         textTMP.SetActive(true);
@@ -575,7 +564,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
         else
         {
-            Debug.Log("手牌数量int越界");
+            //Debug.Log("手牌数量int越界");
         }
     }
 
@@ -592,7 +581,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
         else
         {
-            Debug.Log("墓地数量int越界");
+            //Debug.Log("墓地数量int越界");
         }
     }
 
@@ -605,7 +594,7 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         }
         else
         {
-            Debug.Log("墓地数量int越界");
+            //Debug.Log("墓地数量int越界");
         }
     }
 
@@ -642,7 +631,6 @@ public class BattleManager_Single : MonoSingleton<BattleManager_Single>
         card.transform.SetParent(thisCard.holdingPlayer.fieldZoneTransform);
         card.GetComponent<RectTransform>().localPosition = new Vector3(0f, 0f, 0f);
         card.GetComponent<RectTransform>().localRotation = Quaternion.Euler(0f, 180f, 0f);
-        //HandCountCheck();
     }
 
     #endregion

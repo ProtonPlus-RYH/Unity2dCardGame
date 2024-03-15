@@ -62,14 +62,14 @@ public class EffectList //: MonoSingleton<EffectList>
                 switch (selectionType)
                 {
                     case SelectionType.selectMovementWithCancel:
-                        BattleManager_Single.Instance.AskingDialog_Title.text = "请选择前进或者后退";
+                        BattleManager_Single.Instance.AskingDialog_Title.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_Selection_Move");
                         BattleManager_Single.Instance.AskingDialog.SetActive(true);
                         BattleManager_Single.Instance.MoveForwardClick += MoveForwardWithSelection;
                         BattleManager_Single.Instance.MoveBackClick += MoveBackWithSelection;
                         BattleManager_Single.Instance.CancelClick += SelectionEnd_Event;
                         break;
                     case SelectionType.selectTF://借用judge的结果
-                        BattleManager_Single.Instance.AskingDialog_2_Title.text = "是否执行下一步效果";
+                        BattleManager_Single.Instance.AskingDialog_2_Title.text = LanguageManager.Instance.GetLocalizedString("LocalizationText_Selection_IfDoNext");
                         BattleManager_Single.Instance.AskingDialog_2.SetActive(true);
                         BattleManager_Single.Instance.CancelClick += SelectCancel;
                         BattleManager_Single.Instance.ConfirmClick += SelectConfirm;
@@ -138,7 +138,8 @@ public class EffectList //: MonoSingleton<EffectList>
         }
         else
         {
-            Debug.Log("判断被无效");
+            BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+            //Debug.Log("判断被无效");
         }
     }
 
@@ -164,7 +165,8 @@ public class EffectList //: MonoSingleton<EffectList>
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }
@@ -195,7 +197,8 @@ public class EffectList //: MonoSingleton<EffectList>
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }
@@ -221,13 +224,15 @@ public class EffectList //: MonoSingleton<EffectList>
                 }
                 else
                 {
-                    Debug.Log("逃出攻击范围，攻击不生效");
+                    BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Escaped"));
+                    //Debug.Log("逃出攻击范围，攻击不生效");
                     Negate(SolveTarget.self, false);
                 }
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }
@@ -256,13 +261,15 @@ public class EffectList //: MonoSingleton<EffectList>
                 }
                 else
                 {
-                    Debug.Log("逃出攻击范围，攻击不生效");
+                    BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Escaped"));
+                    //Debug.Log("逃出攻击范围，攻击不生效");
                     Negate(attacker, false);//效果让对方进行攻击并挥空会无效对方此时正在发动的卡的效果，之后考虑要不要改
                 }
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }
@@ -291,7 +298,7 @@ public class EffectList //: MonoSingleton<EffectList>
                     }
                     else
                     {
-                        Debug.Log("伤害目标不合法");
+                        //Debug.Log("伤害目标不合法");
                     }
                 }
                 if (solveTarget == SolveTarget.opponent || solveTarget == SolveTarget.both)
@@ -311,13 +318,14 @@ public class EffectList //: MonoSingleton<EffectList>
                     }
                     else
                     {
-                        Debug.Log("伤害目标不合法");
+                        //Debug.Log("伤害目标不合法");
                     }
                 }
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }
@@ -341,7 +349,8 @@ public class EffectList //: MonoSingleton<EffectList>
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }
@@ -365,7 +374,8 @@ public class EffectList //: MonoSingleton<EffectList>
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }
@@ -389,7 +399,8 @@ public class EffectList //: MonoSingleton<EffectList>
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }
@@ -413,7 +424,8 @@ public class EffectList //: MonoSingleton<EffectList>
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }
@@ -437,7 +449,8 @@ public class EffectList //: MonoSingleton<EffectList>
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }
@@ -455,7 +468,8 @@ public class EffectList //: MonoSingleton<EffectList>
         }
         else
         {
-            Debug.Log("被无效");
+            BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+            //Debug.Log("被无效");
         }
     }
 
@@ -478,7 +492,8 @@ public class EffectList //: MonoSingleton<EffectList>
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }
@@ -503,7 +518,8 @@ public class EffectList //: MonoSingleton<EffectList>
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }
@@ -528,7 +544,8 @@ public class EffectList //: MonoSingleton<EffectList>
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }
@@ -571,7 +588,8 @@ public class EffectList //: MonoSingleton<EffectList>
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }
@@ -580,7 +598,7 @@ public class EffectList //: MonoSingleton<EffectList>
     {
         if (!ifJudged || EffectTransformer.Instance.judgeResult == true)
         {
-            Player player = EffectTransformer.Instance.getUserByPhase();
+            //Player player = EffectTransformer.Instance.getUserByPhase();
             Card playerCard = EffectTransformer.Instance.solvingCard;
             if (!playerCard.ifNegated)
             {
@@ -590,12 +608,13 @@ public class EffectList //: MonoSingleton<EffectList>
                 }
                 else
                 {
-                    Debug.Log("已跳过时点");
+                    //Debug.Log("已跳过时点");
                 }
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }
@@ -612,7 +631,8 @@ public class EffectList //: MonoSingleton<EffectList>
             }
             else
             {
-                Debug.Log("被无效");
+                BattleManager_Single.Instance.hint(LanguageManager.Instance.GetLocalizedString("LocalizationText_Hint_Negated"));
+                //Debug.Log("被无效");
             }
         }
     }

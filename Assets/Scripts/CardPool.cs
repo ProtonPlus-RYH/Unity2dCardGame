@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Localization.Settings;
 using System.IO;
 using System.Text;
 
@@ -15,11 +16,22 @@ public class CardPool : MonoBehaviour
 
     public void getAllCards()
     {
+        cardPool = new List<Card>();
         string[] cardCSVData = cardCSV.text.Split('\n');
         weaponAmount = 0;
         belongAmount = 0;
-        weaponList = new List<string>(weaponAmount){"通用"};
-        belongList = new List<string>(belongAmount){"通用"};
+        weaponList = new List<string>();
+        belongList = new List<string>();
+        if (LocalizationSettings.SelectedLocale == LocalizationSettings.AvailableLocales.Locales[0])
+        {
+            weaponList.Add("通用");
+            belongList.Add("魂");
+        }
+        else if (LocalizationSettings.SelectedLocale == LocalizationSettings.AvailableLocales.Locales[1])
+        {
+            weaponList.Add("Common");
+            belongList.Add("Dark Souls");
+        }
         foreach (var row in cardCSVData)
         {
             string[] cardData = row.Split(',');
@@ -30,16 +42,20 @@ public class CardPool : MonoBehaviour
             else
             {
                 int id = int.Parse(cardData[0]);
-                string weaponType = cardData[1];
+                string weaponType_SC = cardData[1];
+                string weaponType_EN = cardData[15];
                 int weaponID = int.Parse(cardData[2]);
-                string belongType = cardData[3];
+                string belongType_SC = cardData[3];
+                string belongType_EN = cardData[16];
                 int belongID = int.Parse(cardData[4]);
-                string cardName = cardData[6];
+                string cardName_SC = cardData[6];
+                string cardName_EN = cardData[18];
                 int staminaCost = int.Parse(cardData[7]);
                 int manaCost = int.Parse(cardData[8]);
                 int atk = int.Parse(cardData[9]);
                 int distance = int.Parse(cardData[10]);
-                string discription = cardData[11];
+                string discription_SC = cardData[11];
+                string discription_EN = cardData[19];
                 int turnLimit = int.Parse(cardData[13]);
                 int duelLimit = int.Parse(cardData[14]);
                 bool ifquick = false;
@@ -49,25 +65,55 @@ public class CardPool : MonoBehaviour
                 }
                 if (cardData[5] == "攻击" || cardData[5] == "attack")
                 {
-                    cardPool.Add(new AttackCard(id, belongID, weaponID, cardName, staminaCost, manaCost, discription, ifquick, turnLimit, duelLimit, atk, distance));
-                }else if (cardData[5] == "行动" || cardData[5] == "action")
+                    if (LocalizationSettings.SelectedLocale == LocalizationSettings.AvailableLocales.Locales[0])
+                    {
+                        cardPool.Add(new AttackCard(id, belongID, weaponID, cardName_SC, staminaCost, manaCost, discription_SC, ifquick, turnLimit, duelLimit, atk, distance));
+                    }
+                    else if (LocalizationSettings.SelectedLocale == LocalizationSettings.AvailableLocales.Locales[1])
+                    {
+                        cardPool.Add(new AttackCard(id, belongID, weaponID, cardName_EN, staminaCost, manaCost, discription_EN, ifquick, turnLimit, duelLimit, atk, distance));
+                    }
+                }
+                else if (cardData[5] == "行动" || cardData[5] == "action")
                 {
-                    cardPool.Add(new ActionCard(id, belongID, weaponID, cardName, staminaCost, manaCost, discription, ifquick, turnLimit, duelLimit));
+                    if (LocalizationSettings.SelectedLocale == LocalizationSettings.AvailableLocales.Locales[0])
+                    {
+                        cardPool.Add(new ActionCard(id, belongID, weaponID, cardName_SC, staminaCost, manaCost, discription_SC, ifquick, turnLimit, duelLimit));
+                    }
+                    else if (LocalizationSettings.SelectedLocale == LocalizationSettings.AvailableLocales.Locales[1])
+                    {
+                        cardPool.Add(new ActionCard(id, belongID, weaponID, cardName_EN, staminaCost, manaCost, discription_EN, ifquick, turnLimit, duelLimit));
+                    }
                 }
                 
                 if (weaponAmount < weaponID)
                 {
                     weaponAmount = weaponID;
-                    weaponList.Add(weaponType);
+                    if (LocalizationSettings.SelectedLocale == LocalizationSettings.AvailableLocales.Locales[0])
+                    {
+                        weaponList.Add(weaponType_SC);
+                    }
+                    else if (LocalizationSettings.SelectedLocale == LocalizationSettings.AvailableLocales.Locales[1])
+                    {
+                        weaponList.Add(weaponType_EN);
+                    }
                 }
                 if (belongAmount < belongID)
                 {
                     belongAmount = belongID;
-                    belongList.Add(belongType);
+                    if (LocalizationSettings.SelectedLocale == LocalizationSettings.AvailableLocales.Locales[0])
+                    {
+                        belongList.Add(belongType_SC);
+                    }
+                    else if (LocalizationSettings.SelectedLocale == LocalizationSettings.AvailableLocales.Locales[1])
+                    {
+                        belongList.Add(belongType_EN);
+                    }
                 }
             }
         }
     }
+
 
     public List<int> ReadDeck(string deckName)
     {
